@@ -46,10 +46,18 @@ const BrowseProducts = () => {
           <option value="">All</option>
           <option value="Amravati">Amravati</option>
           <option value="Achalpur">Achalpur</option>
+          <option value="Anjangaon Surji">Anjangaon Surji</option>
+          <option value="Bhatkuli">Bhatkuli</option>
           <option value="Chandur Bazar">Chandur Bazar</option>
+          <option value="Chandur Railway">Chandur Railway</option>
+          <option value="Chikhaldara">Chikhaldara</option>
           <option value="Warud">Warud</option>
+          <option value="Dhamangaon Railway">Dhamangaon Railway</option>
+          <option value="Dharni">Dharni</option>
           <option value="Daryapur">Daryapur</option>
           <option value="Morshi">Morshi</option>
+          <option value="Nandgaon Khandeshwar">Nandgaon Khandeshwar</option>
+          <option value="Teosa">Teosa</option>
           <option value="Anjangaon">Anjangaon</option>
           {/* Add more talukas or areas here */}
         </select>
