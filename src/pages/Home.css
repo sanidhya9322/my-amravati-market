@@ -1,0 +1,12 @@
+.hero {
+  min-height: calc(100vh - 140px); /* Adjusts for navbar and footer */
+  background-color: #fdfdfd;
+  padding-top: 60px;
+  padding-bottom: 60px;
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
