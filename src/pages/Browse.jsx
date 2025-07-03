@@ -32,8 +32,8 @@ const BrowseProducts = () => {
     : products;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Browse Products</h1>
+    <div className="px-4 sm:px-8 py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">🛒 Explore MyAmravati Market</h1>
 
       {/* 🌍 Location Filter */}
       <div className="mb-4">
@@ -64,31 +64,32 @@ const BrowseProducts = () => {
       </div>
 
       {/* 🛍️ Product List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.length === 0 ? (
           <p>No products found.</p>
         ) : (
           filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="border rounded shadow p-4 flex flex-col"
+              className="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4 flex flex-col"
             >
               {/* Image */}
               {product.imageUrl && (
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-48 object-cover mb-2 rounded"
+                  className="w-full h-64 object-cover rounded-xl mb-4"
                 />
               )}
 
               {/* Info */}
-              <h2 className="text-lg font-bold">{product.title}</h2>
-              <p className="text-gray-700 mb-1">{product.description}</p>
-              <p className="font-semibold text-sm">
+              <h2 className="text-xl font-semibold mb-1">{product.title}</h2>
+              <p className="text-gray-600 mb-2">{product.description}</p>
+              <p className="text-lg font-bold text-green-600 mb-1">₹{product.price}</p>
+              <p className="text-sm text-gray-500 mb-2">
                 ₹{product.price} | {product.category}
               </p>
-              <p className="text-sm text-gray-600">📍 {product.location}</p>
+              <p className="text-sm text-gray-600">📌 {product.location}</p>
 
               {/* 📞 Contact Seller */}
               {product.sellerPhone ? (
@@ -98,7 +99,7 @@ const BrowseProducts = () => {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3"
+                  className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-center"
                 >
                   <button className="w-full bg-green-500 hover:bg-green-600 text-black px-4 py-2 rounded">
                     Contact Seller
