@@ -5,6 +5,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 const BrowseProducts = () => {
   const [products, setProducts] = useState([]);
   const [filterLocation, setFilterLocation] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
 
   // 🧠 Load all products from Firestore
   useEffect(() => {
@@ -26,41 +27,61 @@ const BrowseProducts = () => {
     fetchProducts();
   }, []);
 
-  // 🧼 Filter products based on selected location
-  const filteredProducts = filterLocation
-    ? products.filter((product) => product.location === filterLocation)
-    : products;
+  // 🧼 Filter products based on selected location and category
+  const filteredProducts = products.filter((product) => {
+    const locationMatch = filterLocation ? product.location === filterLocation : true;
+    const categoryMatch = filterCategory ? product.category === filterCategory : true;
+    return locationMatch && categoryMatch;
+  });
 
   return (
     <div className="px-4 sm:px-8 py-8">
       <h1 className="text-3xl font-bold mb-6 text-center">🛒 Explore MyAmravati Market</h1>
 
-      {/* 🌍 Location Filter */}
-      <div className="mb-4">
-        <label className="font-semibold mr-2">Filter by Location:</label>
-        <select
-          value={filterLocation}
-          onChange={(e) => setFilterLocation(e.target.value)}
-          className="border px-3 py-1 rounded"
-        >
-          <option value="">All</option>
-          <option value="Amravati">Amravati</option>
-          <option value="Achalpur">Achalpur</option>
-          <option value="Anjangaon Surji">Anjangaon Surji</option>
-          <option value="Bhatkuli">Bhatkuli</option>
-          <option value="Chandur Bazar">Chandur Bazar</option>
-          <option value="Chandur Railway">Chandur Railway</option>
-          <option value="Chikhaldara">Chikhaldara</option>
-          <option value="Warud">Warud</option>
-          <option value="Dhamangaon Railway">Dhamangaon Railway</option>
-          <option value="Dharni">Dharni</option>
-          <option value="Daryapur">Daryapur</option>
-          <option value="Morshi">Morshi</option>
-          <option value="Nandgaon Khandeshwar">Nandgaon Khandeshwar</option>
-          <option value="Teosa">Teosa</option>
-          <option value="Anjangaon">Anjangaon</option>
-          {/* Add more talukas or areas here */}
-        </select>
+      {/* 🔍 Filters Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
+        {/* 🌍 Location Filter */}
+        <div>
+          <label className="font-semibold mr-2">Filter by Location:</label>
+          <select
+            value={filterLocation}
+            onChange={(e) => setFilterLocation(e.target.value)}
+            className="border px-3 py-1 rounded"
+          >
+            <option value="">All</option>
+            <option value="Amravati">Amravati</option>
+            <option value="Achalpur">Achalpur</option>
+            <option value="Anjangaon Surji">Anjangaon Surji</option>
+            <option value="Bhatkuli">Bhatkuli</option>
+            <option value="Chandur Bazar">Chandur Bazar</option>
+            <option value="Chandur Railway">Chandur Railway</option>
+            <option value="Chikhaldara">Chikhaldara</option>
+            <option value="Warud">Warud</option>
+            <option value="Dhamangaon Railway">Dhamangaon Railway</option>
+            <option value="Dharni">Dharni</option>
+            <option value="Daryapur">Daryapur</option>
+            <option value="Morshi">Morshi</option>
+            <option value="Nandgaon Khandeshwar">Nandgaon Khandeshwar</option>
+            <option value="Teosa">Teosa</option>
+            <option value="Anjangaon">Anjangaon</option>
+          </select>
+        </div>
+
+        {/* 📦 Category Filter */}
+        <div>
+          <label className="font-semibold mr-2">Filter by Category:</label>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="border px-3 py-1 rounded"
+          >
+            <option value="">All</option>
+            <option value="Books & Notes">Books & Notes</option>
+            <option value="Homemade Items">Homemade Items</option>
+            <option value="Homemade Food">Homemade Food</option>
+            <option value="Second Hand Items">Second Hand Items</option>
+          </select>
+        </div>
       </div>
 
       {/* 🛍️ Product List */}
@@ -78,7 +99,7 @@ const BrowseProducts = () => {
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-64 object-cover rounded-xl mb-4"
+                  className="w-full h-40 object-cover rounded-xl mb-4"
                 />
               )}
 
@@ -87,7 +108,7 @@ const BrowseProducts = () => {
               <p className="text-gray-600 mb-2">{product.description}</p>
               <p className="text-lg font-bold text-green-600 mb-1">₹{product.price}</p>
               <p className="text-sm text-gray-500 mb-2">
-                ₹{product.price} | {product.category}
+                Category: {product.category}
               </p>
               <p className="text-sm text-gray-600">📌 {product.location}</p>
 
@@ -99,7 +120,7 @@ const BrowseProducts = () => {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-auto inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-center"
+                  className="mt-auto inline-block"
                 >
                   <button className="w-full bg-green-500 hover:bg-green-600 text-black px-4 py-2 rounded">
                     Contact Seller
