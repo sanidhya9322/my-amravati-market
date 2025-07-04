@@ -99,7 +99,7 @@ const BrowseProducts = () => {
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-40 object-cover rounded-xl mb-4"
+                  className="w-full h-48 sm:h-56 md:h-60 object-cover rounded-xl mb-4"
                 />
               )}
 
