@@ -125,7 +125,7 @@ const AddProduct = () => {
               onChange={handleChange}
               className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option>Books & Notes</option>
+            <option>Books & Notes</option>
               <option>Handmade Items</option>
               <option>Homemade Food</option>
               <option>Second-hand Items</option>
