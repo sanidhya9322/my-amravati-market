@@ -126,8 +126,8 @@ const AddProduct = () => {
               className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option>Books & Notes</option>
-              <option>Handmade Goods</option>
-              <option>Homemade Foods</option>
+              <option>Handmade Items</option>
+              <option>Homemade Food</option>
               <option>Second-hand Items</option>
             </select>
 

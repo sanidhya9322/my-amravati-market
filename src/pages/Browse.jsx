@@ -76,10 +76,10 @@ const BrowseProducts = () => {
             className="border px-3 py-1 rounded"
           >
             <option value="">All</option>
-            <option value="Books & Notes">Books & Notes</option>
-            <option value="Homemade Items">Homemade Items</option>
-            <option value="Homemade Food">Homemade Food</option>
-            <option value="Second Hand Items">Second Hand Items</option>
+            <option>Books & Notes</option>
+              <option>Handmade Items</option>
+              <option>Homemade Food</option>
+              <option>Second-hand Items</option>
           </select>
         </div>
       </div>
