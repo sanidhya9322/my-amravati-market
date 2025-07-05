@@ -6,6 +6,7 @@ const BrowseProducts = () => {
   const [products, setProducts] = useState([]);
   const [filterLocation, setFilterLocation] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // 🧠 Load all products from Firestore
   useEffect(() => {
@@ -31,7 +32,8 @@ const BrowseProducts = () => {
   const filteredProducts = products.filter((product) => {
     const locationMatch = filterLocation ? product.location === filterLocation : true;
     const categoryMatch = filterCategory ? product.category === filterCategory : true;
-    return locationMatch && categoryMatch;
+    const matchesTitle = product.title.toLowerCase().includes(searchTerm.toLowerCase());
+    return locationMatch && categoryMatch && matchesTitle;
   });
 
   return (
@@ -66,6 +68,18 @@ const BrowseProducts = () => {
             <option value="Anjangaon">Anjangaon</option>
           </select>
         </div>
+
+        {/* 🔍 Search by Keyword */}
+       <div className="mb-4">
+         <label className="font-semibold mr-2">Search Products:</label>
+         <input
+           type="text"
+           value={searchTerm}
+           onChange={(e) => setSearchTerm(e.target.value)}
+           placeholder="Search by title..."
+           className="border px-3 py-1 rounded w-full sm:w-64"
+         />
+     </div>
 
         {/* 📦 Category Filter */}
         <div>
