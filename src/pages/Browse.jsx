@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../firebase/firebaseConfig';
+import { auth, db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { getDoc } from 'firebase/firestore';
 
 const BrowseProducts = () => {
   const [products, setProducts] = useState([]);
@@ -27,6 +29,35 @@ const BrowseProducts = () => {
 
     fetchProducts();
   }, []);
+
+  const handleFavoriteToggle = async (product) => {
+  const user = auth.currentUser;
+  if (!user) return alert('Please login to save favorites');
+
+  const favRef = doc(db, 'users', user.uid, 'favorites', product.id);
+  try {
+    const favSnap = await getDoc(favRef);
+
+    if (favSnap.exists()) {
+      // Already in favorites, remove it
+      await deleteDoc(favRef);
+      alert('Removed from favorites!');
+    } else {
+      // Not in favorites, add it
+    await setDoc(favRef, {
+      productId: product.id,
+      title: product.title,
+      imageUrl: product.imageUrl,
+      price: product.price,
+      createdAt: product.createdAt,
+    });
+    alert('Added to favorites!');
+
+     }
+  } catch (error) {
+    console.error('Error saving favorite:', error);
+  }
+};
 
   // 🧼 Filter products based on selected location and category
   const filteredProducts = products.filter((product) => {
@@ -142,6 +173,13 @@ const BrowseProducts = () => {
               ) : (
                 <p className="text-red-500 mt-2">No phone number available</p>
               )}
+              <button
+       onClick={() => handleFavoriteToggle(product)}
+       className="text-red-500 font-semibold text-sm mt-2 hover:text-red-600"
+      >
+        ❤️ Save to Wishlist
+      </button>
+
             </div>
           ))
         )}
