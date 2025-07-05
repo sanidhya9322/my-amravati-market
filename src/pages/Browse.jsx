@@ -39,6 +39,17 @@ const BrowseProducts = () => {
   return (
     <div className="px-4 sm:px-8 py-8">
       <h1 className="text-3xl font-bold mb-6 text-center">🛒 Explore MyAmravati Market</h1>
+{/* 🔍 Search by Keyword */}
+       <div className="mb-4">
+         <label className="font-semibold mr-2">Search Products:</label>
+         <input
+           type="text"
+           value={searchTerm}
+           onChange={(e) => setSearchTerm(e.target.value)}
+           placeholder="Search by title..."
+           className="border px-3 py-1 rounded w-full sm:w-64"
+         />
+     </div>
 
       {/* 🔍 Filters Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
@@ -68,18 +79,6 @@ const BrowseProducts = () => {
             <option value="Anjangaon">Anjangaon</option>
           </select>
         </div>
-
-        {/* 🔍 Search by Keyword */}
-       <div className="mb-4">
-         <label className="font-semibold mr-2">Search Products:</label>
-         <input
-           type="text"
-           value={searchTerm}
-           onChange={(e) => setSearchTerm(e.target.value)}
-           placeholder="Search by title..."
-           className="border px-3 py-1 rounded w-full sm:w-64"
-         />
-     </div>
 
         {/* 📦 Category Filter */}
         <div>
