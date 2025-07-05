@@ -174,11 +174,12 @@ const BrowseProducts = () => {
                 <p className="text-red-500 mt-2">No phone number available</p>
               )}
               <button
-       onClick={() => handleFavoriteToggle(product)}
-       className="text-red-500 font-semibold text-sm mt-2 hover:text-red-600"
-      >
-        ❤️ Save to Wishlist
-      </button>
+  className="btn btn-sm btn-outline-danger"
+  onClick={() => handleAddToFavorites(product)}
+>
+  ❤️
+</button>
+
 
             </div>
           ))
