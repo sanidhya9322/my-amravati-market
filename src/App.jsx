@@ -47,6 +47,14 @@ function App() {
              </ProtectedRoute>
           }
         />
+        <Route
+  path="/favorites"
+  element={
+    <ProtectedRoute>
+      <Favorites />
+    </ProtectedRoute>
+  }
+/>
       </Routes>
     </Router>
   );

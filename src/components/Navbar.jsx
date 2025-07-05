@@ -29,6 +29,9 @@ function Navbar() {
           <Link to="/dashboard" className="btn btn-outline-primary me-2">Dashboard</Link>
           <span className="me-3">{user.email}</span>
           <button onClick={handleLogout} className="btn btn-outline-danger">Logout</button>
+          <Link to="/favorites" className="nav-link">
+    ❤️ Wishlist
+  </Link>
         </>
       ) : (
         <>
