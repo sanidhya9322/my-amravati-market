@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Browse from './pages/Browse';
 import EditProduct from './pages/EditProduct';
 import NotFound from './pages/NotFound';
+import Favorites from './pages/Favorites';
 
 function App() {
   return (
