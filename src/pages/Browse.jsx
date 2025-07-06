@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { auth, db } from '../firebase/firebaseConfig';
+import { db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getDoc } from 'firebase/firestore';
+import {auth } from '../firebase/firebaseConfig';
 
 const BrowseProducts = () => {
   const [products, setProducts] = useState([]);
@@ -30,7 +31,7 @@ const BrowseProducts = () => {
     fetchProducts();
   }, []);
 
-  const handleFavoriteToggle = async (product) => {
+  const handleAddToFavorites = async (product) => {
   const user = auth.currentUser;
   if (!user) return alert('Please login to save favorites');
 
