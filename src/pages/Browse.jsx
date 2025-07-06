@@ -144,7 +144,7 @@ const BrowseProducts = () => {
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-30 sm:h-56 md:h-60 object-cover rounded-xl mb-4"
+                  className="w-full h-48 object-contain p-2"
                 />
               )}
 
@@ -167,7 +167,7 @@ const BrowseProducts = () => {
                   rel="noopener noreferrer"
                   className="mt-auto inline-block"
                 >
-                  <button className="w-full bg-green-500 hover:bg-green-600 text-black px-4 py-2 rounded">
+                  <button className="w-full bg-blue-500 hover:bg-blue-600 text-black px-4 py-2 rounded">
                     Contact Seller
                   </button>
                 </a>
