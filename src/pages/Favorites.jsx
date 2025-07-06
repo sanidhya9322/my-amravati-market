@@ -1,37 +1,47 @@
-import React, { useEffect, useState } from 'react';
-import { auth, db } from '../firebase/firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebase";
 
 const Favorites = () => {
+  const [user] = useAuthState(auth);
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const user = auth.currentUser;
       if (!user) return;
-
-      const favRef = collection(db, 'users', user.uid, 'favorites');
-      const snapshot = await getDocs(favRef);
-      const favList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setFavorites(favList);
+      const q = query(collection(db, "favorites"), where("userId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const favs = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setFavorites(favs);
     };
 
     fetchFavorites();
-  }, []);
+  }, [user]);
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Your Favorite Products ❤️</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {favorites.map((product) => (
-          <div key={product.id} className="bg-white p-4 rounded-xl shadow-md">
-            <img src={product.imageUrl} alt={product.title} className="h-40 w-full object-cover rounded" />
-            <h3 className="text-lg font-semibold mt-2">{product.title}</h3>
-            <p className="text-green-700 font-bold">₹{product.price}</p>
-            <p className="text-sm text-gray-500">{product.location} | {product.category}</p>
-          </div>
-        ))}
-      </div>
+    <div className="container mt-4">
+      <h2>Your Wishlist</h2>
+      {favorites.length === 0 ? (
+        <p>No items in wishlist yet.</p>
+      ) : (
+        <div className="row">
+          {favorites.map((item) => (
+            <div className="col-md-4 mb-4" key={item.id}>
+              <div className="card">
+                <img src={item.image} className="card-img-top" alt={item.title} />
+                <div className="card-body">
+                  <h5 className="card-title">{item.title}</h5>
+                  <p className="card-text">₹{item.price}</p>
+                  <p className="card-text"><strong>Category:</strong> {item.category}</p>
+                  <p className="card-text"><strong>Location:</strong> {item.location}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
