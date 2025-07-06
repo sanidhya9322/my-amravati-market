@@ -144,7 +144,7 @@ const BrowseProducts = () => {
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-48 object-contain p-2"
+                  className="w-full h-48 object-cover rounded"
                 />
               )}
 
