@@ -5,7 +5,7 @@ import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getDoc } from 'firebase/firestore';
 import {auth } from '../firebase/firebaseConfig';
 
-const BrowseProducts = () => {
+const Browse = () => {
   const [products, setProducts] = useState([]);
   const [filterLocation, setFilterLocation] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -190,4 +190,4 @@ const BrowseProducts = () => {
   );
 };
 
-export default BrowseProducts;
+export default Browse;
