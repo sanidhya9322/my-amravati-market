@@ -39,10 +39,6 @@ function Dashboard() {
     } catch (error) {
       console.error('Error deleting:', error);
       alert('❌ Failed to delete.');
-     <Link to={`/edit/${product.id}`} className="btn btn-warning me-2">
-  📝 Edit
-     </Link>
- 
     }
   };
 
@@ -66,15 +62,17 @@ function Dashboard() {
                   <p className="card-text"><strong>📍</strong> {product.location}</p>
                   <p className="card-text">{product.description}</p>
 
-                  <button
-                    className="bg-red-500 text-white px-4 py-2 rounded"
-                    onClick={() => handleDelete(product.id, product.imagePath)}
-                  >
-                    🗑️ Delete
-                  </button>
-
-                  {/* (Optional) Add edit button later */}
-                  {/* <button className="btn btn-warning">Edit</button> */}
+                  <div className="d-flex gap-2">
+                    <Link to={`/edit/${product.id}`} className="btn btn-warning">
+                      📝 Edit
+                    </Link>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDelete(product.id, product.imagePath)}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
