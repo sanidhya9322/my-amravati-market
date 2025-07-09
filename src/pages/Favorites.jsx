@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { db } from "../firebase/firebaseConfig";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../firebase";
+import { auth } from "../firebase/firebaseConfig";
 
 const Favorites = () => {
   const [user] = useAuthState(auth);
