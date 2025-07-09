@@ -178,7 +178,7 @@ const Browse = () => {
   className="btn btn-sm btn-outline-danger"
   onClick={() => handleAddToFavorites(product)}
 >
-  ❤️
+  ❤️Add to Favorites
 </button>
 
 

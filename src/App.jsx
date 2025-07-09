@@ -22,6 +22,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/browse" element={<Browse />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/favorites" element={<Favorites />} />
 
         {/* ✅ Protected Routes */}
         <Route
