@@ -70,10 +70,10 @@ const Browse = () => {
 
   return (
     <div className="px-4 sm:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">🛒 Explore MyAmravati Market</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">🛒 Explore MyAmravati Market</h1>
 {/* 🔍 Search by Keyword */}
        <div className="mb-4">
-         <label className="font-semibold mr-2">Search Products:</label>
+         <label className="font-semibold block mb-1">Search Products:</label>
          <input
            type="text"
            value={searchTerm}
@@ -84,14 +84,14 @@ const Browse = () => {
      </div>
 
       {/* 🔍 Filters Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 mb-6">
         {/* 🌍 Location Filter */}
         <div>
-          <label className="font-semibold mr-2">Filter by Location:</label>
+          <label className="font-semibold block mb-1">Filter by Location:</label>
           <select
             value={filterLocation}
             onChange={(e) => setFilterLocation(e.target.value)}
-            className="border px-3 py-1 rounded"
+            className="border px-3 py-1 rounded w-full"
           >
             <option value="">All</option>
             <option value="Amravati">Amravati</option>
@@ -114,11 +114,11 @@ const Browse = () => {
 
         {/* 📦 Category Filter */}
         <div>
-          <label className="font-semibold mr-2">Filter by Category:</label>
+          <label className="font-semibold block mb-1">Filter by Category:</label>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="border px-3 py-1 rounded"
+            className="border px-3 py-1 rounded w-full"
           >
             <option value="">All</option>
             <option>Books & Notes</option>
@@ -132,19 +132,19 @@ const Browse = () => {
       {/* 🛍️ Product List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.length === 0 ? (
-          <p>No products found.</p>
+          <p className="text-center col-span-full">No products found.</p>
         ) : (
           filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4 flex flex-col"
+              className="bg-white rounded-2xl shadow p-4 flex flex-col justify-between"
             >
               {/* Image */}
               {product.imageUrl && (
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-48 object-cover rounded"
+                  className="w-full h-48 object-cover rounded-xl mb-3"
                 />
               )}
 
@@ -152,10 +152,10 @@ const Browse = () => {
               <h2 className="text-xl font-semibold mb-1">{product.title}</h2>
               <p className="text-gray-600 mb-2">{product.description}</p>
               <p className="text-lg font-bold text-green-600 mb-1">₹{product.price}</p>
-              <p className="text-sm text-gray-500 mb-2">
+              <p className="text-sm text-gray-500 mb-1">
                 Category: {product.category}
               </p>
-              <p className="text-sm text-gray-600">📌 {product.location}</p>
+              <p className="text-sm text-gray-500 mb-3">📌 {product.location}</p>
 
               {/* 📞 Contact Seller */}
               {product.sellerPhone ? (
@@ -165,17 +165,17 @@ const Browse = () => {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-auto inline-block"
+                   className="mt-auto inline-block"
                 >
-                  <button className="w-full bg-blue-500 hover:bg-blue-600 text-black px-4 py-2 rounded">
+                  <button className="w-full bg-blue-500 hover:bg-blue-600 text-black text-sm px-4 py-2 rounded mb-2">
                     Contact Seller
                   </button>
                 </a>
               ) : (
-                <p className="text-red-500 mt-2">No phone number available</p>
+                <p className="text-red-500 text-sm">No phone number available</p>
               )}
               <button
-  className="btn btn-sm btn-outline-danger"
+  className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-sm px-4 py-2 rounded"
   onClick={() => handleAddToFavorites(product)}
 >
   ❤️Add to Favorites
