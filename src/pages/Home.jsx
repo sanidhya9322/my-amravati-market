@@ -9,13 +9,12 @@ function Home() {
         <span className="navbar-brand fw-bold fs-4">MyAmravati Market</span>
         <div>
           <Link to="/" className="text-white me-3 text-decoration-none">Home</Link>
-          <Link to="/login" className="text-white me-2 fw-semibold text-decoration-none">Login</Link>
-          <Link to="/signup" className="text-white fw-semibold text-decoration-none">Signup</Link>
+          
         </div>
       </header>
 
       <main className="hero text-center d-flex flex-column justify-content-center align-items-center px-3">
-        <h1 className="display-4 fw-bold mb-3">Welcome to MyAmravati Market</h1>
+        <h1 className="display-4 fw-bold mb-3">Welcome to MyAmravati Market </h1>
         <p className="lead mb-4 w-100" style={{ maxWidth: '750px' }}>
           A digital bazaar for students, home entrepreneurs, and locals of the Amravati district.
           Buy and sell books, crafts, handmade food, second-hand items and more.
