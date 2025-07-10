@@ -22,7 +22,7 @@ function Navbar() {
 
   return (
   <nav className="navbar navbar-expand-lg navbar-light bg-light px-4">
-    <img src="/logo.png" alt="MyAmravati Market" className="h-10 w-auto" />
+    
     <div className="ml-auto d-flex align-items-center">
       {user ? (
         <>
