@@ -85,7 +85,7 @@ function Home() {
         <small>© 2025 MyAmravati Market</small>
         <p className="mb-0"> MyAmravati Market • Made with ❤️ for Amravati</p>
         <br />
-        <small>Built for Amravati | <a href="#" className="text-info text-decoration-none">Powered by You</a></small>
+        <small>Built for Amravati | <a href="#" className="text-info text-decoration-none">Powered by you</a></small>
       </footer>
     </>
   );
