@@ -5,6 +5,8 @@ import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getDoc } from 'firebase/firestore';
 import { auth } from '../firebase/firebaseConfig';
 import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+import { useRef } from 'react';
 
 const Browse = () => {
   const [products, setProducts] = useState([]);
@@ -15,6 +17,8 @@ const Browse = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        const ref = useRef(null);
+        const isInView = useInView(ref, { once: true });
         const productsRef = collection(db, 'products');
         const q = query(productsRef, orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
@@ -134,12 +138,14 @@ const Browse = () => {
           filteredProducts.map((product) => (
             <motion.div
               key={product.id}
+              ref={ref}
+              initial={{ opacity: 0, y: 40 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
               className="bg-white rounded-2xl shadow p-4 flex flex-col justify-between"
-              whileHover={{ scale: 1.02 }}
-              initial={{ opacity: 0, y: 30 }}
+             whileHover={{ scale: 1.02 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
+               viewport={{ once: true }}
              >
               {product.imageUrl && (
                 <img
