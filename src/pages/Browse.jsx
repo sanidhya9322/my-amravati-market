@@ -3,8 +3,7 @@ import { db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getDoc } from 'firebase/firestore';
-import { auth } from '../firebase/firebaseConfig';
-import { motion } from 'framer-motion';
+ import { auth } from '../firebase/firebaseConfig';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
