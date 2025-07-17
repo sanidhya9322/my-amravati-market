@@ -3,7 +3,7 @@ import { db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getDoc } from 'firebase/firestore';
- import { auth } from '../firebase/firebaseConfig';
+import { auth } from '../firebase/firebaseConfig';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
@@ -16,8 +16,6 @@ const Browse = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const ref = useRef(null);
-        const isInView = useInView(ref, { once: true });
         const productsRef = collection(db, 'products');
         const q = query(productsRef, orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
