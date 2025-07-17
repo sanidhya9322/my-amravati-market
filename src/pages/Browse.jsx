@@ -135,15 +135,14 @@ const Browse = () => {
           filteredProducts.map((product) => (
             <motion.div
               key={product.id}
-              ref={ref}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="bg-white rounded-2xl shadow p-4 flex flex-col justify-between"
-             whileHover={{ scale: 1.02 }}
+               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true }}
-             >
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl shadow p-4 flex flex-col justify-between"
+              whileHover={{ scale: 1.02 }}
+            >
+
               {product.imageUrl && (
                 <img
                   src={product.imageUrl}
