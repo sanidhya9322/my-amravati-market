@@ -1,9 +1,18 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import './Home.css';
 
 function Home() {
+  // Refs and InView triggers for each card
+  const step1Ref = useRef(null);
+  const step2Ref = useRef(null);
+  const step3Ref = useRef(null);
+
+  const step1InView = useInView(step1Ref, { once: true });
+  const step2InView = useInView(step2Ref, { once: true });
+  const step3InView = useInView(step3Ref, { once: true });
+
   return (
     <>
       <motion.header
@@ -14,8 +23,7 @@ function Home() {
       >
         <span className="navbar-brand fw-bold fs-4">MyAmravati Market</span>
         <div>
-          <Link to="/" className="text-white me-3 text-decoration-none">Home</Link>
-          
+         <Link to="/" className="text-white me-3 text-decoration-none">Home</Link>
         </div>
       </motion.header>
 
@@ -25,7 +33,7 @@ function Home() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.7 }}
       >
-        <h1 className="display-4 fw-bold mb-3">🎉Welcome to MyAmravati  Market✨ </h1>
+        <h1 className="display-4 fw-bold mb-3">🎉Welcome to MyAmravati Market✨</h1>
         <p className="lead mb-4 w-100" style={{ maxWidth: '750px' }}>
           A digital bazaar for students, home entrepreneurs, and locals of the Amravati district.
           Buy and sell books, crafts, handmade food, second-hand items and more.
@@ -43,13 +51,7 @@ function Home() {
       </motion.main>
 
       {/* === How It Works Section === */}
-      <motion.div
-        className="bg-gray-100 py-16 px-4"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        viewport={{ once: true }}
-      >
+      <div className="bg-gray-100 py-16 px-4">
         <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">
           How MyAmravati Market Works
         </h2>
@@ -57,9 +59,12 @@ function Home() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Step 1 */}
           <motion.div
+            ref={step1Ref}
+            initial={{ opacity: 0, y: 50 }}
+            animate={step1InView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
             className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
-            whileHover={{ scale: 1.05 }}
-          >
+           >
             <div className="text-5xl mb-4">📸</div>
             <h3 className="text-xl font-semibold mb-2">List Your Product</h3>
             <p className="text-gray-600">Upload a photo, set your price, write details, and share your WhatsApp number.</p>
@@ -67,8 +72,11 @@ function Home() {
 
           {/* Step 2 */}
           <motion.div
-            className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
-            whileHover={{ scale: 1.05 }}
+            ref={step2Ref}
+            initial={{ opacity: 0, y: 50 }}
+            animate={step2InView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+           className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
           >
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold mb-2">Browse & Contact</h3>
@@ -77,8 +85,11 @@ function Home() {
 
           {/* Step 3 */}
           <motion.div
-            className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
-            whileHover={{ scale: 1.05 }}
+            ref={step3Ref}
+            initial={{ opacity: 0, y: 50 }}
+            animate={step3InView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+           className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
           >
             <div className="text-5xl mb-4">🤝</div>
             <h3 className="text-xl font-semibold mb-2">Deal & Deliver</h3>
@@ -97,7 +108,7 @@ function Home() {
             </motion.button>
           </a>
         </div>
-      </motion.div>
+      </div>
 
       {/* === Support Section === */}
       <motion.div
@@ -129,6 +140,6 @@ function Home() {
       </footer>
     </>
   );
-} 
+}
 
 export default Home;
