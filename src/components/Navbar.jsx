@@ -21,7 +21,7 @@ function Navbar() {
   };
 
   return (
-  <nav className="navbar navbar-expand-lg navbar-light bg-light px-4">
+  <div className="navbar navbar-expand-lg navbar-light px-2 flex-wrap">
         <span className="navbar-brand fw-bold fs-4">MyAmravati Market</span>
         <div></div>
     <div className="ml-auto d-flex align-items-center">
@@ -41,7 +41,7 @@ function Navbar() {
         </>
       )}
     </div>
-  </nav>
+  </div>
 );
 
 }
