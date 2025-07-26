@@ -164,7 +164,7 @@ const Browse = () => {
                   rel="noopener noreferrer"
                   className="mt-auto"
                 >
-                  <button className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-2 rounded mb-2">
+                  <button className="w-full bg-blue-500 hover:bg-blue-600 text-black text-xs px-3 py-2 rounded mb-2">
                     Contact Seller
                   </button>
                 </a>
