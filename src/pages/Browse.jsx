@@ -148,7 +148,7 @@ const Browse = () => {
                 <img
                   src={product.imageUrl}
                   alt={product.title}
-                  className="w-full h-48 object-cover rounded-xl mb-3"
+                  className="w-full h-40 object-cover rounded-xl"
                 />
              )}
               <h2 className="text-xl font-semibold mb-1">{product.title}</h2>
