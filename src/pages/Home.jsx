@@ -36,7 +36,9 @@ function Home() {
 
 
       >
-        <h1 className="display-4 fw-bold mb-3">🎉Welcome to MyAmravati Market✨</h1>
+        <h1 className="fw-bold mb-3 text-center text-3xl sm:text-4xl leading-tight px-3">
+  🎉 Welcome to <br className="d-sm-none" /> MyAmravati Market ✨
+</h1>
         <p className="lead mb-4 w-100" style={{ maxWidth: '100%' }}>
           A digital bazaar for students, home entrepreneurs, and locals of the Amravati district.
           Buy and sell books, crafts, handmade food, second-hand items and more.
