@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase/firebaseConfig";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { db, auth } from "../firebase/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../firebase/firebaseConfig";
 
 const Favorites = () => {
   const [user] = useAuthState(auth);
@@ -11,10 +10,19 @@ const Favorites = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!user) return;
-      const q = query(collection(db, "favorites"), where("userId", "==", user.uid));
-      const querySnapshot = await getDocs(q);
-      const favs = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setFavorites(favs);
+
+      try {
+        // ✅ Correct path: users/{uid}/favorites
+        const favRef = collection(db, `users/${user.uid}/favorites`);
+        const snapshot = await getDocs(favRef);
+        const favs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setFavorites(favs);
+      } catch (error) {
+        console.error("❌ Error fetching favorites:", error);
+      }
     };
 
     fetchFavorites();
