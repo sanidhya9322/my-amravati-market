@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc,addDoc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth } from '../firebase/firebaseConfig';
 import { motion } from 'framer-motion';
 import { serverTimestamp } from 'firebase/firestore';
@@ -31,34 +31,36 @@ const Browse = () => {
   }, []);
 
   const handleAddToFavorites = async (product) => {
-    const user = auth.currentUser;
-   const q = query(collection(db, `users/${user.uid}/favorites`));
-   collection(db, `users/${user.uid}/favorites`)
-    console.log("Current user:", user?.uid);
-    if (!user) return alert('Please login to save favorites');
+  const user = auth.currentUser;
+  if (!user) return alert('Please login to save favorites');
 
-    const favRef = doc(db, 'users', user.uid, 'favorites', product.id);
-    
-    try { 
-      const favSnap = await getDoc(favRef);
+  const favRef = doc(db, 'users', user.uid, 'favorites', product.id);
 
-      if (favSnap.exists()) {
-        await deleteDoc(favRef);
-        alert('Removed from favorites!');
-      } else {
-        await setDoc(favRef, {
-          productId: product.id,
-  title: product.title || '',
-  imageUrl: product.imageUrl || '',
-  price: product.price || 0,
-  createdAt: product.createdAt || serverTimestamp(),
-});
-        alert('Added to favorites!');
-      }
-    } catch (error) {
-      console.error('Error saving favorite:', error);
+  try {
+    const favSnap = await getDoc(favRef);
+
+    if (favSnap.exists()) {
+      await deleteDoc(favRef);
+      alert('Removed from favorites!');
+    } else {
+      await setDoc(favRef, {
+        productId: product.id,
+        title: product.title || '',
+        imageUrl: product.imageUrl || '',
+        price: product.price || 0,
+        description: product.description || '',
+        category: product.category || '',
+        location: product.location || '',
+        sellerPhone: product.sellerPhone || '',
+        createdAt: product.createdAt || serverTimestamp(),
+      });
+      alert('Added to favorites!');
     }
-  };
+  } catch (error) {
+    console.error('Error saving favorite:', error);
+  }
+};
+
 
   const filteredProducts = products.filter((product) => {
     const locationMatch = filterLocation ? product.location === filterLocation : true;
