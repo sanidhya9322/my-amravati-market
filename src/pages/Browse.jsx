@@ -3,6 +3,7 @@ import { db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth } from '../firebase/firebaseConfig';
 import { motion } from 'framer-motion';
+import { serverTimestamp } from 'firebase/firestore';
 
 const Browse = () => {
   const [products, setProducts] = useState([]);
@@ -43,11 +44,11 @@ const Browse = () => {
       } else {
         await setDoc(favRef, {
           productId: product.id,
-          title: product.title,
-          imageUrl: product.imageUrl,
-          price: product.price,
-          createdAt: product.createdAt,
-        });
+  title: product.title || '',
+  imageUrl: product.imageUrl || '',
+  price: product.price || 0,
+  createdAt: product.createdAt || serverTimestamp(),
+});
         alert('Added to favorites!');
       }
     } catch (error) {
