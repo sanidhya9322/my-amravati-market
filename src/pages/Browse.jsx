@@ -35,14 +35,8 @@ const Browse = () => {
     if (!user) return alert('Please login to save favorites');
 
     const favRef = doc(db, 'users', user.uid, 'favorites', product.id);
-    const userDocRef = doc(db, 'users', user.uid);
-
-    try {
-      const userDocSnap = await getDoc(userDocRef);
-    if (!userDocSnap.exists()) {
-      await setDoc(userDocRef, {}); // create parent doc
-    }
-
+    
+    try { 
       const favSnap = await getDoc(favRef);
 
       if (favSnap.exists()) {
