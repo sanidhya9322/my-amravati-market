@@ -33,6 +33,7 @@ const Browse = () => {
   const handleAddToFavorites = async (product) => {
     const user = auth.currentUser;
    const q = query(collection(db, `users/${user.uid}/favorites`));
+   collection(db, `users/${user.uid}/favorites`)
     console.log("Current user:", user?.uid);
     if (!user) return alert('Please login to save favorites');
 
