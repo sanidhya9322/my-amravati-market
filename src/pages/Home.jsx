@@ -28,10 +28,13 @@ function Home() {
       </motion.header>
 
       <motion.main
-        className="hero text-center d-flex flex-column justify-content-center align-items-center px-3"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7 }}
+         className="text-center px-3 py-5 mx-auto"
+         style={{ maxWidth: '600px' }}
+         initial={{ opacity: 0, scale: 0.95 }}
+         animate={{ opacity: 1, scale: 1 }}
+         transition={{ duration: 0.7 }}
+
+
       >
         <h1 className="display-4 fw-bold mb-3">🎉Welcome to MyAmravati Market✨</h1>
         <p className="lead mb-4 w-100" style={{ maxWidth: '100%' }}>
@@ -49,6 +52,7 @@ function Home() {
           <Link to="/add-product" className="btn btn-outline-success btn-lg shadow">Add Your Product</Link>
         </motion.div>
       </motion.main>
+<hr className="my-0 border-0" style={{ height: '1px', background: '#eee' }} />
 
       {/* === How It Works Section === */}
       <div className="bg-gray-100 py-16 px-4">
