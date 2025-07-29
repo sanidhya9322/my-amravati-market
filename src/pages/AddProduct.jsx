@@ -202,14 +202,14 @@ const AddProduct = () => {
               accept="image/*"
               onChange={handleImageChange}
               required
-              className="w-full px-4 py-2 border rounded-lg"
+              className="w-full px-4 py-2 border rounded-xl shadow-sm"
             />
 
             {previewURL && (
               <img
                 src={previewURL}
                 alt="Preview"
-                className="mt-4 rounded-lg w-full h-48 object-cover border"
+                className="mt-4 rounded-xl w-full h-48 object-cover border shadow"
               />
             )}
           </div>
@@ -217,7 +217,7 @@ const AddProduct = () => {
           <button
             type="submit"
             disabled={uploading}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+            className={`w-full py-3 rounded-xl font-semibold text-black text-lg shadow-md transition ${
               uploading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
             }`}
           >
