@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { storage, db, auth } from "../firebase/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +16,36 @@ const AddProduct = () => {
   });
 
   const [image, setImage] = useState(null);
+  const [previewURL, setPreviewURL] = useState(null);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
+
+  // 🚦 Daily product post limit (e.g., 3)
+  const DAILY_LIMIT = 3;
+
+  useEffect(() => {
+    // Auto-fill location using GPS (if allowed)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const data = await response.json();
+            const cityOrVillage = data.address.village || data.address.city || data.address.town || "";
+            setFormData((prev) => ({ ...prev, location: cityOrVillage }));
+          } catch (error) {
+            console.warn("Location fetch failed:", error);
+          }
+        },
+        (error) => {
+          console.warn("Geolocation permission denied.");
+        }
+      );
+    }
+  }, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -26,30 +55,48 @@ const AddProduct = () => {
   };
 
   const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
+    const file = e.target.files[0];
+    setImage(file);
+    if (file) setPreviewURL(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!image) {
-      alert("Please select an image.");
+      toast.error("Please select an image.");
       return;
     }
 
     if (!auth.currentUser) {
-      alert("You must be logged in to add a product.");
+      toast.error("You must be logged in to add a product.");
       return;
     }
 
     setUploading(true);
 
     try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const productsRef = collection(db, "products");
+      const q = query(
+        productsRef,
+        where("userId", "==", auth.currentUser.uid),
+        where("createdAt", ">=", today)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.size >= DAILY_LIMIT) {
+        toast.error("🚫 Daily post limit reached (3 per day).");
+        setUploading(false);
+        return;
+      }
+
       const imageRef = ref(storage, `productImages/${Date.now()}_${image.name}`);
       await uploadBytes(imageRef, image);
       const imageUrl = await getDownloadURL(imageRef);
 
-      const productsRef = collection(db, "products");
       await addDoc(productsRef, {
         ...formData,
         price: parseFloat(formData.price),
@@ -59,11 +106,11 @@ const AddProduct = () => {
         createdAt: serverTimestamp(),
       });
 
-      alert("Product added successfully✅!");
-      navigate("/dashboard");
+      toast.success("✅ Product added successfully!");
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (error) {
       console.error("Error adding product:", error);
-      alert("Something went wrong. Try again.");
+      toast.error("Something went wrong. Try again.");
     } finally {
       setUploading(false);
     }
@@ -71,10 +118,13 @@ const AddProduct = () => {
 
   return (
     <div className="flex justify-center items-center py-10 px-4 bg-gray-100 min-h-screen">
+      <Toaster position="top-center" reverseOrder={false} />
+
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8">
         <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
           📦 Add New Product
         </h2>
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <input
             type="text"
@@ -125,11 +175,11 @@ const AddProduct = () => {
               onChange={handleChange}
               className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-            <option>Books & Notes</option>
-              <option>Handmade Items</option>
-              <option>Homemade Food</option>
-              <option>Second-hand Items</option>
-              <option>New Items</option>
+              <option>📚 Books & Notes</option>
+              <option>🧵 Handmade Items</option>
+              <option>🍱 Homemade Food</option>
+              <option>♻️ Second-hand Items</option>
+              <option>🆕 New Items</option>
             </select>
 
             <input
@@ -154,12 +204,20 @@ const AddProduct = () => {
               required
               className="w-full px-4 py-2 border rounded-lg"
             />
+
+            {previewURL && (
+              <img
+                src={previewURL}
+                alt="Preview"
+                className="mt-4 rounded-lg w-full h-48 object-cover border"
+              />
+            )}
           </div>
 
           <button
             type="submit"
             disabled={uploading}
-            className={`w-full py-3 rounded-lg font-semibold text-black transition ${
+            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
               uploading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
             }`}
           >
