@@ -11,10 +11,14 @@ function Dashboard() {
 
   const fetchUserProducts = async () => {
     if (!user) return;
-    const q = query(collection(db, 'products'), where('userId', '==', user.uid));
-    const snapshot = await getDocs(q);
-    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProducts(list);
+    try {
+      const q = query(collection(db, 'products'), where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(list);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    }
   };
 
   useEffect(() => {
@@ -22,23 +26,25 @@ function Dashboard() {
   }, [user]);
 
   const handleDelete = async (productId, imageURL) => {
-    const confirm = window.confirm('Delete this product?');
-    if (!confirm) return;
+    const confirmDelete = window.confirm('Are you sure you want to delete this product?');
+    if (!confirmDelete) return;
 
     try {
-      // 1. Delete image from Storage
-      const imgRef = ref(storage, imageURL);
-      await deleteObject(imgRef);
+      // 1. Delete image from Firebase Storage
+      if (imageURL) {
+        const imageRef = ref(storage, imageURL);
+        await deleteObject(imageRef);
+      }
 
-      // 2. Delete document from Firestore
+      // 2. Delete product document from Firestore
       await deleteDoc(doc(db, 'products', productId));
 
-      // 3. Refresh UI
-      setProducts(products.filter(p => p.id !== productId));
-      alert('✅ Product deleted!');
+      // 3. Update UI
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      alert('✅ Product deleted successfully!');
     } catch (error) {
-      console.error('Error deleting:', error);
-      alert('❌ Failed to delete.');
+      console.error('❌ Error deleting product:', error);
+      alert('❌ Failed to delete the product.');
     }
   };
 
@@ -68,7 +74,7 @@ function Dashboard() {
                     </Link>
                     <button
                       className="btn btn-danger"
-                      onClick={() => handleDelete(product.id, product.imagePath)}
+                      onClick={() => handleDelete(product.id, product.imageURL)}
                     >
                       🗑️ Delete
                     </button>
