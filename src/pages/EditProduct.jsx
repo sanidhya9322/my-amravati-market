@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, storage } from '../firebase/firebaseConfig';
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 function EditProduct() {
@@ -15,12 +10,12 @@ function EditProduct() {
 
   const [product, setProduct] = useState(null);
   const [formData, setFormData] = useState({
-    productName: '',
+    title : '',
     description: '',
     price: '',
     location: '',
     category: '',
-    imageURL: '',
+    imageUrl : '',
   });
   const [newImageFile, setNewImageFile] = useState(null);
 
@@ -33,12 +28,12 @@ function EditProduct() {
         const data = docSnap.data();
         setProduct(data);
         setFormData({
-          productName: data.productName,
+         title : data.title,
           description: data.description,
           price: data.price,
           location: data.location,
           category: data.category,
-          imageURL: data.imageURL,
+         imageUrl : data.imageUrl,
         });
       } else {
         alert('Product not found!');
