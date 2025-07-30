@@ -141,7 +141,7 @@ const ProductDetails = () => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <button className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            <button className="w-full bg-blue-500 hover:bg-blue-600 text-black px-4 py-2 rounded">
               Contact Seller via WhatsApp
             </button>
           </a>
