@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import { auth } from '../firebase/firebaseConfig';
+import { db, auth } from '../firebase/firebaseConfig';
+import {collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc,} from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
@@ -11,6 +10,7 @@ const Browse = () => {
   const [filterLocation, setFilterLocation] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -27,7 +27,6 @@ const Browse = () => {
         console.error('Error fetching products:', error);
       }
     };
-
     fetchProducts();
   }, []);
 
@@ -62,12 +61,19 @@ const Browse = () => {
     }
   };
 
-  const filteredProducts = products.filter((product) => {
-    const locationMatch = filterLocation ? product.location === filterLocation : true;
-    const categoryMatch = filterCategory ? product.category === filterCategory : true;
-    const matchesTitle = product.title.toLowerCase().includes(searchTerm.toLowerCase());
-    return locationMatch && categoryMatch && matchesTitle;
-  });
+  const filteredProducts = products
+    .filter((product) => {
+      const locationMatch = filterLocation ? product.location === filterLocation : true;
+      const categoryMatch = filterCategory ? product.category === filterCategory : true;
+      const matchesTitle = product.title.toLowerCase().includes(searchTerm.toLowerCase());
+      return locationMatch && categoryMatch && matchesTitle;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'priceLowHigh') return a.price - b.price;
+      if (sortOrder === 'priceHighLow') return b.price - a.price;
+      if (sortOrder === 'newest') return b.createdAt?.seconds - a.createdAt?.seconds;
+      return 0;
+    });
 
   return (
     <motion.div
@@ -91,7 +97,7 @@ const Browse = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="font-semibold block mb-1 text-sm">Filter by Location:</label>
             <select
@@ -100,21 +106,9 @@ const Browse = () => {
               className="border px-3 py-2 rounded w-full text-sm"
             >
               <option value="">All</option>
-              <option value="Amravati">Amravati</option>
-              <option value="Achalpur">Achalpur</option>
-              <option value="Anjangaon Surji">Anjangaon Surji</option>
-              <option value="Bhatkuli">Bhatkuli</option>
-              <option value="Chandur Bazar">Chandur Bazar</option>
-              <option value="Chandur Railway">Chandur Railway</option>
-              <option value="Chikhaldara">Chikhaldara</option>
-              <option value="Warud">Warud</option>
-              <option value="Dhamangaon Railway">Dhamangaon Railway</option>
-              <option value="Dharni">Dharni</option>
-              <option value="Daryapur">Daryapur</option>
-              <option value="Morshi">Morshi</option>
-              <option value="Nandgaon Khandeshwar">Nandgaon Khandeshwar</option>
-              <option value="Teosa">Teosa</option>
-              <option value="Anjangaon">Anjangaon</option>
+              {["Amravati", "Achalpur", "Anjangaon Surji", "Bhatkuli", "Chandur Bazar", "Chandur Railway", "Chikhaldara", "Warud", "Dhamangaon Railway", "Dharni", "Daryapur", "Morshi", "Nandgaon Khandeshwar", "Teosa", "Anjangaon"].map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
             </select>
           </div>
 
@@ -126,11 +120,22 @@ const Browse = () => {
               className="border px-3 py-2 rounded w-full text-sm"
             >
               <option value="">All</option>
-              <option>Books & Notes</option>
-              <option>Handmade Items</option>
-              <option>Homemade Food</option>
-              <option>Second-hand Items</option>
-              <option>New Items</option>
+              {["Books & Notes", "Handmade Items", "Homemade Food", "Second-hand Items", "New Items"].map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="font-semibold block mb-1 text-sm">Sort By:</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="border px-3 py-2 rounded w-full text-sm"
+            >
+              <option value="newest">Newest First</option>
+              <option value="priceLowHigh">Price: Low to High</option>
+              <option value="priceHighLow">Price: High to Low</option>
             </select>
           </div>
         </div>
@@ -141,13 +146,12 @@ const Browse = () => {
         {filteredProducts.length === 0 ? (
           <p className="text-center col-span-full text-sm">No products found.</p>
         ) : (
-          filteredProducts.map((product) => (
+          filteredProducts.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
               whileHover={{ scale: 1.02 }}
               className="bg-white rounded-2xl shadow p-3 flex flex-col"
             >
@@ -161,8 +165,10 @@ const Browse = () => {
                 <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
                 <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>
                 <p className="text-sm font-bold text-green-600 mb-1">₹{product.price}</p>
-                <p className="text-xs text-gray-500">📦 {product.category}</p>
-                <p className="text-xs text-gray-500 mb-2">📌 {product.location}</p>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span className="bg-blue-100 px-2 py-1 rounded-full">{product.category}</span>
+                  <span className="bg-yellow-100 px-2 py-1 rounded-full">{product.location}</span>
+                </div>
               </Link>
 
               <button

@@ -1,10 +1,10 @@
-// ProductDetails.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { db } from '../firebase/firebaseConfig';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { db } from '../firebase/firebaseConfig'; // Ensure path is correct
 import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
+import { FaWhatsapp, FaTelegramPlane, FaLink, FaMapMarkerAlt } from 'react-icons/fa';
+import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { FaWhatsapp, FaTelegramPlane, FaLink } from 'react-icons/fa';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -14,7 +14,6 @@ const ProductDetails = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [similarLoading, setSimilarLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -24,17 +23,19 @@ const ProductDetails = () => {
         if (productSnap.exists()) {
           setProduct({ id: productSnap.id, ...productSnap.data() });
         } else {
-          setError('Product not found.');
+          toast.error('Product not found');
+          navigate('/browse');
         }
       } catch (err) {
         console.error('Error fetching product:', err);
-        setError('Something went wrong.');
+        toast.error('Something went wrong');
+        navigate('/browse');
       } finally {
         setLoading(false);
       }
     };
     fetchProduct();
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     const fetchSimilar = async () => {
@@ -62,20 +63,16 @@ const ProductDetails = () => {
   const handleCopyLink = () => {
     const url = `${window.location.origin}/product/${id}`;
     navigator.clipboard.writeText(url);
-    alert('🔗 Link copied to clipboard!');
+    toast.success('🔗 Link copied to clipboard!');
   };
 
-  if (loading) {
+  if (loading || !product) {
     return <div className="p-4 text-center">⏳ Loading product...</div>;
-  }
-
-  if (error) {
-    return <div className="p-4 text-center text-red-500">❌ {error}</div>;
   }
 
   return (
     <motion.div
-      className="px-4 py-6 min-h-screen bg-gray-50"
+      className="px-4 py-6 min-h-screen bg-gray-50 max-w-5xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -92,18 +89,25 @@ const ProductDetails = () => {
           <img
             src={product.imageUrl}
             alt={product.title}
-            className="w-full h-64 object-cover rounded-xl mb-4"
+            className="w-full max-h-[500px] object-cover rounded-xl mb-4"
           />
         )}
 
-        <h1 className="text-xl font-semibold mb-2">{product.title}</h1>
-        <p className="text-sm text-gray-600 mb-2">{product.description}</p>
-        <p className="text-lg text-green-600 font-bold mb-2">₹{product.price}</p>
-        <p className="text-sm text-gray-500 mb-1">📦 {product.category}</p>
-        <p className="text-sm text-gray-500 mb-4">📌 {product.location}</p>
+        <h1 className="text-2xl font-bold mb-2">{product.title}</h1>
+        <p className="text-gray-700 mb-2">{product.description}</p>
+        <div className="text-xl text-green-600 font-bold mb-2">₹{product.price}</div>
+
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-yellow-100 rounded-full">
+            🏷 {product.category}
+          </span>
+          <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-pink-100 rounded-full">
+            <FaMapMarkerAlt className="text-pink-600" /> {product.location}
+          </span>
+        </div>
 
         {/* Share */}
-        <div className="flex gap-4 mb-4">
+        <div className="flex gap-4 mb-6">
           <a
             href={`https://wa.me/?text=Check out this product: ${window.location.origin}/product/${id}`}
             target="_blank"
@@ -129,9 +133,9 @@ const ProductDetails = () => {
         </div>
 
         {/* Contact Seller */}
-        {product.sellerPhone ? (
+        {product.contact || product.sellerPhone ? (
           <a
-            href={`https://wa.me/${product.sellerPhone}?text=${encodeURIComponent(
+            href={`https://wa.me/91${product.contact || product.sellerPhone}?text=${encodeURIComponent(
               `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
             )}`}
             target="_blank"
