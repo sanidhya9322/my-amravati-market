@@ -2,9 +2,9 @@ import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import './Home.css';
-import marketwomen from '../assets/market-women.png'; // Adjust path if needed
 
 function Home() {
+  // Refs and InView triggers for each card
   const step1Ref = useRef(null);
   const step2Ref = useRef(null);
   const step3Ref = useRef(null);
@@ -23,47 +23,38 @@ function Home() {
       >
         <span className="navbar-brand fw-bold fs-4">MyAmravati Market</span>
         <div>
-          <Link to="/" className="text-white me-3 text-decoration-none">Home</Link>
+         <Link to="/" className="text-white me-3 text-decoration-none">Home</Link>
         </div>
       </motion.header>
 
-      {/* === Hero Section with Gradient Background & Image === */}
-      <motion.section
-        className="px-4 py-5 text-center"
-        style={{
-          background: 'linear-gradient(to bottom, #f6fbff, #ffffff)',
-          minHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
+      <motion.main
+         className="text-center px-3 py-5 mx-auto"
+         style={{ maxWidth: '600px' }}
+         initial={{ opacity: 0, scale: 0.95 }}
+         animate={{ opacity: 1, scale: 1 }}
+         transition={{ duration: 0.7 }}
+
+
       >
-        <h1 className="fw-bold mb-3 text-3xl sm:text-4xl leading-tight">
-          🎉 Welcome to <br className="d-sm-none" /> MyAmravati Market ✨
-        </h1>
-        <p className="lead mb-4 px-2" style={{ maxWidth: '600px' }}>
+        <h1 className="fw-bold mb-3 text-center text-3xl sm:text-4xl leading-tight px-3">
+  🎉 Welcome to <br className="d-sm-none" /> MyAmravati Market ✨
+</h1>
+        <p className="lead mb-4 w-100" style={{ maxWidth: '100%' }}>
           A digital bazaar for students, home entrepreneurs, and locals of the Amravati district.
           Buy and sell books, crafts, handmade food, second-hand items and more.
         </p>
 
-        <div className="d-flex gap-3 flex-wrap justify-content-center mb-4">
+        <motion.div
+          className="d-flex gap-3 flex-wrap justify-content-center mb-5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
           <Link to="/browse" className="btn btn-primary btn-lg shadow">Browse Products</Link>
           <Link to="/add-product" className="btn btn-outline-success btn-lg shadow">Add Your Product</Link>
-        </div>
-
-        {/* Woman Illustration */}
-        <img
-          src="/market-women.png"
-          alt="Market Woman"
-          style={{ maxWidth: '300px', width: '100%', marginTop: '30px' }}
-        />
-      </motion.section>
-
-      <hr className="my-0 border-0" style={{ height: '1px', background: '#eee' }} />
+        </motion.div>
+      </motion.main>
+<hr className="my-0 border-0" style={{ height: '1px', background: '#eee' }} />
 
       {/* === How It Works Section === */}
       <div className="bg-gray-100 py-16 px-4">
@@ -72,36 +63,39 @@ function Home() {
         </h2>
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Step 1 */}
           <motion.div
             ref={step1Ref}
             initial={{ opacity: 0, y: 50 }}
             animate={step1InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition-transform"
-          >
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
+           >
             <div className="text-5xl mb-4">📸</div>
             <h3 className="text-xl font-semibold mb-2">List Your Product</h3>
             <p className="text-gray-600">Upload a photo, set your price, write details, and share your WhatsApp number.</p>
           </motion.div>
 
+          {/* Step 2 */}
           <motion.div
             ref={step2Ref}
             initial={{ opacity: 0, y: 50 }}
             animate={step2InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition-transform"
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+           className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
           >
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold mb-2">Browse & Contact</h3>
             <p className="text-gray-600">Buyers search local listings and chat directly with sellers via WhatsApp.</p>
           </motion.div>
 
+          {/* Step 3 */}
           <motion.div
             ref={step3Ref}
             initial={{ opacity: 0, y: 50 }}
             animate={step3InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition-transform"
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+           className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
           >
             <div className="text-5xl mb-4">🤝</div>
             <h3 className="text-xl font-semibold mb-2">Deal & Deliver</h3>
@@ -109,6 +103,7 @@ function Home() {
           </motion.div>
         </div>
 
+        {/* Call To Action Button */}
         <div className="text-center mt-12">
           <a href="/add-product">
             <motion.button
@@ -145,7 +140,7 @@ function Home() {
 
       <footer className="bg-dark text-white text-center py-3">
         <small>© 2025 MyAmravati Market</small>
-        <p className="mb-0"> MyAmravati Market • Made with ❤ for Amravati</p>
+        <p className="mb-0"> MyAmravati Market • Made with ❤️ for Amravati</p>
         <br />
         <small>Built for Amravati | <a href="#" className="text-info text-decoration-none">Powered by you</a></small>
       </footer>
