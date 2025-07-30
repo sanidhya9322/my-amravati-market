@@ -4,7 +4,7 @@ import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc } f
 import { auth } from '../firebase/firebaseConfig';
 import { motion } from 'framer-motion';
 import { serverTimestamp } from 'firebase/firestore';
-import { FaWhatsapp, FaTelegramPlane, FaLink } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Browse = () => {
   const [products, setProducts] = useState([]);
@@ -78,6 +78,7 @@ const Browse = () => {
     >
       <h1 className="text-xl sm:text-2xl font-bold mb-4 text-center">🛒 Explore MyAmravati Market</h1>
 
+      {/* Filters */}
       <div className="mb-4 space-y-3">
         <div>
           <label className="font-semibold block mb-1 text-sm">Search Products:</label>
@@ -135,6 +136,7 @@ const Browse = () => {
         </div>
       </div>
 
+      {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {filteredProducts.length === 0 ? (
           <p className="text-center col-span-full text-sm">No products found.</p>
@@ -146,74 +148,25 @@ const Browse = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl shadow p-3 flex flex-col"
               whileHover={{ scale: 1.02 }}
+              className="bg-white rounded-2xl shadow p-3 flex flex-col"
             >
-              {product.imageUrl && (
+              <Link to={`/product/${product.id}`} className="flex flex-col flex-grow">
                 <img
-                  src={product.imageUrl}
+                  src={product.imageUrl || '/placeholder.png'}
                   alt={product.title}
                   className="w-full h-36 object-cover rounded-xl mb-2"
+                  loading="lazy"
                 />
-              )}
-              <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
-              <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>
-              <p className="text-sm font-bold text-green-600 mb-1">₹{product.price}</p>
-              <p className="text-xs text-gray-500">📦 {product.category}</p>
-              <p className="text-xs text-gray-500 mb-2">📌 {product.location}</p>
-
-              {/* Share buttons */}
-              <div className="flex gap-3 mb-3">
-                <a
-                  href={`https://wa.me/?text=Check out this product: ${window.location.origin}/product/${product.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-600 hover:text-green-800 text-lg"
-                  title="Share on WhatsApp"
-                >
-                  <FaWhatsapp />
-                </a>
-                <a
-                  href={`https://t.me/share/url?url=${window.location.origin}/product/${product.id}&text=Check out this product on MyAmravati Market!`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-700 text-lg"
-                  title="Share on Telegram"
-                >
-                  <FaTelegramPlane />
-                </a>
-                <button
-                  onClick={() => {
-                    const url = `${window.location.origin}/product/${product.id}`;
-                    navigator.clipboard.writeText(url);
-                    alert("🔗 Link copied to clipboard!");
-                  }}
-                  className="text-gray-700 hover:text-black text-lg"
-                  title="Copy Link"
-                >
-                  <FaLink />
-                </button>
-              </div>
-
-              {product.sellerPhone ? (
-                <a
-                  href={`https://wa.me/${product.sellerPhone}?text=${encodeURIComponent(
-                    `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-auto"
-                >
-                  <button className="w-full bg-blue-500 hover:bg-blue-600 text-black text-xs px-3 py-2 rounded mb-2">
-                    Contact Seller
-                  </button>
-                </a>
-              ) : (
-                <p className="text-red-500 text-xs">No phone number available</p>
-              )}
+                <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
+                <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>
+                <p className="text-sm font-bold text-green-600 mb-1">₹{product.price}</p>
+                <p className="text-xs text-gray-500">📦 {product.category}</p>
+                <p className="text-xs text-gray-500 mb-2">📌 {product.location}</p>
+              </Link>
 
               <button
-                className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs px-3 py-2 rounded"
+                className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs px-3 py-2 rounded mt-2"
                 onClick={() => handleAddToFavorites(product)}
               >
                 ❤️ Add to Favorites
