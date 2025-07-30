@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { db } from '../firebase/firebaseConfig'; // Ensure path is correct
+import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
-import { FaWhatsapp, FaTelegramPlane, FaLink, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaWhatsapp, FaTelegramPlane, FaCopy, FaMapMarkerAlt, FaShareAlt } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
@@ -14,6 +14,7 @@ const ProductDetails = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [similarLoading, setSimilarLoading] = useState(true);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -64,6 +65,7 @@ const ProductDetails = () => {
     const url = `${window.location.origin}/product/${id}`;
     navigator.clipboard.writeText(url);
     toast.success('🔗 Link copied to clipboard!');
+    setShareOpen(false);
   };
 
   if (loading || !product) {
@@ -84,14 +86,58 @@ const ProductDetails = () => {
         ← Back to Browse
       </button>
 
-      <div className="bg-white rounded-2xl shadow p-5">
-        {product.imageUrl && (
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="w-full max-h-[500px] object-cover rounded-xl mb-4"
-          />
-        )}
+      <div className="bg-white rounded-2xl shadow p-5 relative">
+        {/* Image + Share Button */}
+        <div className="relative">
+          {product.imageUrl && (
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              className="w-full max-h-[500px] object-cover rounded-xl mb-4"
+            />
+          )}
+
+          {/* Share Dropdown Button */}
+          <div className="absolute top-4 right-4">
+            <button
+              onClick={() => setShareOpen(!shareOpen)}
+              className="bg-white border shadow p-2 rounded-full hover:bg-gray-100"
+            >
+              <FaShareAlt size={18} />
+            </button>
+
+            {shareOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-md z-10">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `Check out this product: ${window.location.origin}/product/${id}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  <FaWhatsapp className="text-green-600 mr-2" /> WhatsApp
+                </a>
+                <a
+                  href={`https://t.me/share/url?url=${encodeURIComponent(
+                    `${window.location.origin}/product/${id}`
+                  )}&text=${encodeURIComponent('Check out this product!')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  <FaTelegramPlane className="text-blue-500 mr-2" /> Telegram
+                </a>
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  <FaCopy className="text-gray-700 mr-2" /> Copy Link
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         <h1 className="text-2xl font-bold mb-2">{product.title}</h1>
         <p className="text-gray-700 mb-2">{product.description}</p>
@@ -104,32 +150,6 @@ const ProductDetails = () => {
           <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-pink-100 rounded-full">
             <FaMapMarkerAlt className="text-pink-600" /> {product.location}
           </span>
-        </div>
-
-        {/* Share */}
-        <div className="flex gap-4 mb-6">
-          <a
-            href={`https://wa.me/?text=Check out this product: ${window.location.origin}/product/${id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-green-600 hover:text-green-800 text-xl"
-          >
-            <FaWhatsapp />
-          </a>
-          <a
-            href={`https://t.me/share/url?url=${window.location.origin}/product/${id}&text=Check out this product!`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-700 text-xl"
-          >
-            <FaTelegramPlane />
-          </a>
-          <button
-            onClick={handleCopyLink}
-            className="text-gray-600 hover:text-black text-xl"
-          >
-            <FaLink />
-          </button>
         </div>
 
         {/* Contact Seller */}
