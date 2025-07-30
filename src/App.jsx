@@ -12,7 +12,7 @@ import EditProduct from './pages/EditProduct';
 import NotFound from './pages/NotFound';
 import Favorites from './pages/Favorites';
 import useLenis from './hooks/useLenis';
-
+import ProductDetails from './pages/ProductDetails';
 
 function App() {
   useLenis();
@@ -60,6 +60,10 @@ function App() {
     </ProtectedRoute>
   }
 />
+<Route
+ path="/product/:id" 
+ element={
+ <ProductDetails />} />
       </Routes>
     </Router>
   );
