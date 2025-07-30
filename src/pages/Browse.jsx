@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, orderBy, doc,addDoc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth } from '../firebase/firebaseConfig';
 import { motion } from 'framer-motion';
 import { serverTimestamp } from 'firebase/firestore';
+import { FaWhatsapp, FaTelegramPlane, FaLink } from 'react-icons/fa';
 
 const Browse = () => {
   const [products, setProducts] = useState([]);
@@ -31,36 +32,35 @@ const Browse = () => {
   }, []);
 
   const handleAddToFavorites = async (product) => {
-  const user = auth.currentUser;
-  if (!user) return alert('Please login to save favorites');
+    const user = auth.currentUser;
+    if (!user) return alert('Please login to save favorites');
 
-  const favRef = doc(db, 'users', user.uid, 'favorites', product.id);
+    const favRef = doc(db, 'users', user.uid, 'favorites', product.id);
 
-  try {
-    const favSnap = await getDoc(favRef);
+    try {
+      const favSnap = await getDoc(favRef);
 
-    if (favSnap.exists()) {
-      await deleteDoc(favRef);
-      alert('Removed from favorites!');
-    } else {
-      await setDoc(favRef, {
-        productId: product.id,
-        title: product.title || '',
-        imageUrl: product.imageUrl || '',
-        price: product.price || 0,
-        description: product.description || '',
-        category: product.category || '',
-        location: product.location || '',
-        sellerPhone: product.sellerPhone || '',
-        createdAt: product.createdAt || serverTimestamp(),
-      });
-      alert('Added to favorites!');
+      if (favSnap.exists()) {
+        await deleteDoc(favRef);
+        alert('Removed from favorites!');
+      } else {
+        await setDoc(favRef, {
+          productId: product.id,
+          title: product.title || '',
+          imageUrl: product.imageUrl || '',
+          price: product.price || 0,
+          description: product.description || '',
+          category: product.category || '',
+          location: product.location || '',
+          sellerPhone: product.sellerPhone || '',
+          createdAt: product.createdAt || serverTimestamp(),
+        });
+        alert('Added to favorites!');
+      }
+    } catch (error) {
+      console.error('Error saving favorite:', error);
     }
-  } catch (error) {
-    console.error('Error saving favorite:', error);
-  }
-};
-
+  };
 
   const filteredProducts = products.filter((product) => {
     const locationMatch = filterLocation ? product.location === filterLocation : true;
@@ -161,6 +161,39 @@ const Browse = () => {
               <p className="text-sm font-bold text-green-600 mb-1">₹{product.price}</p>
               <p className="text-xs text-gray-500">📦 {product.category}</p>
               <p className="text-xs text-gray-500 mb-2">📌 {product.location}</p>
+
+              {/* Share buttons */}
+              <div className="flex gap-3 mb-3">
+                <a
+                  href={`https://wa.me/?text=Check out this product: ${window.location.origin}/product/${product.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-600 hover:text-green-800 text-lg"
+                  title="Share on WhatsApp"
+                >
+                  <FaWhatsapp />
+                </a>
+                <a
+                  href={`https://t.me/share/url?url=${window.location.origin}/product/${product.id}&text=Check out this product on MyAmravati Market!`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-700 text-lg"
+                  title="Share on Telegram"
+                >
+                  <FaTelegramPlane />
+                </a>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/product/${product.id}`;
+                    navigator.clipboard.writeText(url);
+                    alert("🔗 Link copied to clipboard!");
+                  }}
+                  className="text-gray-700 hover:text-black text-lg"
+                  title="Copy Link"
+                >
+                  <FaLink />
+                </button>
+              </div>
 
               {product.sellerPhone ? (
                 <a
