@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import './Home.css';
+import marketwomen from '../assets/market-women.png'; // Adjust path if needed
 
 function Home() {
   const step1Ref = useRef(null);
@@ -56,8 +57,8 @@ function Home() {
 
         {/* Woman Illustration */}
         <img
-          src="/assets/market-women.png"
-          alt="Woman Seller"
+          src="/market-women.png"
+          alt="Market Woman"
           style={{ maxWidth: '300px', width: '100%', marginTop: '30px' }}
         />
       </motion.section>
