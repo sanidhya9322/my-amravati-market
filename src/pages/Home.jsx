@@ -141,7 +141,10 @@ function Home() {
       <footer className="bg-dark text-white text-center py-3">
         <small>© 2025 MyAmravati Market</small>
         <p className="mb-0"> MyAmravati Market • Made with ❤️ for Amravati</p>
-        <br />
+        <div className="text-center text-sm mt-10 text-gray-500">
+  <Link to="/terms" className="hover:underline">Terms & Conditions</Link> | 
+  <Link to="/privacy" className="hover:underline ml-2">Privacy Policy</Link>
+</div>
         <small>Built for Amravati | <a href="#" className="text-info text-decoration-none">Powered by you</a></small>
       </footer>
     </>
