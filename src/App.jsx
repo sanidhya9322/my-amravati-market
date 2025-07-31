@@ -13,6 +13,8 @@ import NotFound from './pages/NotFound';
 import Favorites from './pages/Favorites';
 import useLenis from './hooks/useLenis';
 import ProductDetails from './pages/ProductDetails';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function App() {
   useLenis();
@@ -26,6 +28,8 @@ function App() {
         <Route path="/browse" element={<Browse />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         {/* ✅ Protected Routes */}
         <Route
@@ -68,5 +72,6 @@ function App() {
     </Router>
   );
 }
+
 
 export default App;
