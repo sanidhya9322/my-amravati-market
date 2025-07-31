@@ -29,7 +29,7 @@ function Navbar() {
         <>
           <Link to="/dashboard" className="btn btn-outline-primary me-2">Dashboard</Link>
           <span className="me-3">{user.email}</span>
-          <button onClick={handleLogout} className="btn btn-outline-danger">Logout</button>
+          <button onClick={handleLogout} className="btn btn-outline-danger btn-sm me-2">Logout</button>
           <Link to="/favorites" className="nav-link">
     ❤️ Wishlist
   </Link>
@@ -37,7 +37,13 @@ function Navbar() {
       ) : (
         <>
           <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
-          <Link to="/signup" className="btn btn-outline-success">Signup</Link>
+          <Link to="/signup" className="btn btn-outline-success">Signup</Link>        
+<div className="text-center text-sm text-gray-500 py-4">
+  © {new Date().getFullYear()} MyAmravati Market ·
+  <Link to="/terms" className="mx-2 underline">Terms & Conditions</Link> ·
+  <Link to="/privacy" className="underline">Privacy Policy</Link>
+</div>
+
         </>
       )}
     </div>

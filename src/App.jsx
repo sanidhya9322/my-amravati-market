@@ -69,9 +69,14 @@ function App() {
  element={
  <ProductDetails />} />
       </Routes>
-    </Router>
+   
+<Routes>
+  {/* existing routes */}
+  <Route path="/terms" element={<TermsAndConditions />} />
+  <Route path="/privacy" element={<PrivacyPolicy />} />
+</Routes>
+</Router>
   );
 }
-
 
 export default App;
