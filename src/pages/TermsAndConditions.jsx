@@ -45,7 +45,7 @@ const TermsAndConditions = () => {
 
       <h2 className="text-xl font-semibold mt-6">7. Contact</h2>
       <p>
-        For any queries, contact us at: <strong>sanipethe22@gmail.com</strong>
+        For any queries, contact us at: <strong>sanidhyapethe@gmail.com</strong>
       </p>
     </div>
   );

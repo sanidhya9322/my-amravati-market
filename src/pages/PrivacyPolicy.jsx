@@ -42,7 +42,7 @@ const PrivacyPolicy = () => {
 
       <h2 className="text-xl font-semibold mt-6">6. Contact</h2>
       <p>
-        For any privacy-related questions, email: <strong>sanipethe22@gmail.com</strong>
+        For any privacy-related questions, email: <strong>sanidhyapethe@gmail.com</strong>
       </p>
     </div>
   );
