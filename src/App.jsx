@@ -69,12 +69,7 @@ function App() {
  element={
  <ProductDetails />} />
       </Routes>
-   
-<Routes>
-  {/* existing routes */}
-  <Route path="/terms" element={<TermsAndConditions />} />
-  <Route path="/privacy" element={<PrivacyPolicy />} />
-</Routes>
+  
 </Router>
   );
 }

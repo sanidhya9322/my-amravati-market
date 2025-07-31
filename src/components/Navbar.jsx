@@ -12,9 +12,8 @@ function Navbar() {
     const unsubscribe = onAuthStateChanged(auth, (currUser) => {
       setUser(currUser);
     });
-    return () => unsubscribe();
+    return () => unsubscribe(); // ✅ properly closing the unsubscribe function
   }, []);
-
   const handleLogout = () => {
     signOut(auth);
     navigate('/');
@@ -38,11 +37,6 @@ function Navbar() {
         <>
           <Link to="/login" className="btn btn-outline-primary me-2">Login</Link>
           <Link to="/signup" className="btn btn-outline-success">Signup</Link>        
-<div className="text-center text-sm text-gray-500 py-4">
-  © {new Date().getFullYear()} MyAmravati Market ·
-  <Link to="/terms" className="mx-2 underline">Terms & Conditions</Link> ·
-  <Link to="/privacy" className="underline">Privacy Policy</Link>
-</div>
 
         </>
       )}
