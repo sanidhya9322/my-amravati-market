@@ -37,7 +37,7 @@ function Home() {
 
       >
         <h1 className="fw-bold mb-3 text-center text-3xl sm:text-4xl leading-tight px-3">
-  🎉 Welcome to <br className="d-sm-none" /> MyAmravati Market chaitali holey  ✨
+  🎉 Welcome to <br className="d-sm-none" /> MyAmravati Market   ✨
 </h1>
         <p className="lead mb-4 w-100" style={{ maxWidth: '100%' }}>
           A digital bazaar for students, home entrepreneurs, and locals of the Amravati district.
