@@ -120,7 +120,7 @@ const Browse = () => {
               className="border px-3 py-2 rounded w-full text-sm"
             >
               <option value="">All</option>
-              {["Books & Notes", "Handmade Items", "Homemade Food", "Second-hand Items", "New Items, Electronics"].map(cat => (
+              {["Books & Notes", "Handmade Items", "Homemade Food", "Second-hand Items", "New Items","Electronics"].map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
