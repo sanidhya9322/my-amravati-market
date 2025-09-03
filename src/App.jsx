@@ -15,23 +15,26 @@ import useLenis from './hooks/useLenis';
 import ProductDetails from './pages/ProductDetails';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import { Toaster } from 'react-hot-toast'; // ✅
 
 function App() {
   useLenis();
+
   return (
     <Router>
       <Navbar />
+      {/* ✅ One global Toaster for the entire app */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/browse" element={<Browse />} />
-        <Route path="*" element={<NotFound />} />
-        <Route path="/favorites" element={<Favorites />} />
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="*" element={<NotFound />} />
 
-        {/* ✅ Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -47,30 +50,26 @@ function App() {
               <AddProduct />
             </ProtectedRoute>
           }
-          />
-          <Route
+        />
+        <Route
           path="/edit/:id"
           element={
-             <ProtectedRoute>
-               <EditProduct />
-             </ProtectedRoute>
+            <ProtectedRoute>
+              <EditProduct />
+            </ProtectedRoute>
           }
         />
         <Route
-  path="/favorites"
-  element={
-    <ProtectedRoute>
-      <Favorites />
-    </ProtectedRoute>
-  }
-/>
-<Route
- path="/product/:id" 
- element={
- <ProductDetails />} />
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Favorites />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/product/:id" element={<ProductDetails />} />
       </Routes>
-  
-</Router>
+    </Router>
   );
 }
 
