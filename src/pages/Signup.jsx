@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { auth } from '../firebase/firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import toast from "react-hot-toast";
+
 
 function Signup() {
   const [email, setEmail] = useState('');
@@ -30,6 +32,9 @@ function Signup() {
       </form>
     </div>
   );
+  toast.success("Signup in successfully!");
+toast.error("Invalid credentials!");
+
 }
 
 export default Signup;

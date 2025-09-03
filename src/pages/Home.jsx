@@ -2,6 +2,8 @@ import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import './Home.css';
+import toast from "react-hot-toast";
+
 
 function Home() {
   // Refs and InView triggers for each card
@@ -149,6 +151,9 @@ function Home() {
       </footer>
     </>
   );
+  toast.success("Logged in successfully!");
+toast.error("Invalid credentials!");
+
 }
 
 export default Home;
