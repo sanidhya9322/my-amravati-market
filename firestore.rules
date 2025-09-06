@@ -2,34 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 🔐 Check if user is signed in
+    // 🔐 Helper: check if user is signed in
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // 👤 Users: only owner can edit, any signed-in user can read
+    // 👤 Users collection
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if request.auth.uid == userId;
+      allow read: if isSignedIn(); // any signed-in user can read profiles
+      allow write: if request.auth.uid == userId; // only user can edit their own profile
     }
 
-    // 🛒 Products: anyone can read, only signed-in users can create, only owner can update/delete
+    // 🛒 Products collection
     match /products/{productId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if request.auth.uid == resource.data.userId; 
-      // using userId consistently instead of ownerId
+      allow read: if true; // anyone can read
+      allow create: if isSignedIn(); // only signed-in users can create
+      allow update, delete: if request.auth.uid == resource.data.userId; // only owner can modify
     }
 
-    // ❤️ Favorites: users can manage only their own
+    // ❤️ Favorites collection
     match /favorites/{favId} {
-      allow read, write: if request.auth.uid == request.resource.data.userId;
+      allow read: if isSignedIn(); // signed-in users can read their favorites
+      allow create: if isSignedIn(); // any signed-in user can add a favorite
+      allow update, delete: if request.auth.uid == resource.data.userId; // only owner can modify
     }
 
-    // 🛍️ Orders: only buyers and sellers can access
+    // 🛍️ Orders collection
     match /orders/{orderId} {
-      allow create: if isSignedIn();
-      allow read, update, delete: if request.auth.uid in [resource.data.buyerId, resource.data.sellerId];
+      allow create: if isSignedIn(); // only signed-in users can place orders
+      allow read, update, delete: if request.auth.uid in [resource.data.buyerId, resource.data.sellerId]; 
+      // only buyer or seller can access
     }
 
     // 🚫 Default: deny everything else
