@@ -9,27 +9,27 @@ service cloud.firestore {
 
     // 👤 Users collection
     match /users/{userId} {
-      allow read: if isSignedIn(); // any signed-in user can read profiles
-      allow write: if request.auth.uid == userId; // only user can edit their own profile
+      allow read: if isSignedIn();               // any signed-in user can read profiles
+      allow write: if request.auth.uid == userId; // only profile owner can edit
     }
 
     // 🛒 Products collection
     match /products/{productId} {
-      allow read: if true; // anyone can read
-      allow create: if isSignedIn(); // only signed-in users can create
+      allow read: if true;                        // anyone can browse products
+      allow create: if isSignedIn();             // only signed-in users can add products
       allow update, delete: if request.auth.uid == resource.data.userId; // only owner can modify
     }
 
-    // ❤️ Favorites collection
-    match /favorites/{favId} {
-      allow read: if isSignedIn(); // signed-in users can read their favorites
-      allow create: if isSignedIn(); // any signed-in user can add a favorite
+    // ❤️ Wishlist collection
+    match /wishlist/{wishId} {
+      allow read: if isSignedIn();               // signed-in users can read their wishlist
+      allow create: if isSignedIn();             // signed-in users can add to wishlist
       allow update, delete: if request.auth.uid == resource.data.userId; // only owner can modify
     }
 
     // 🛍️ Orders collection
     match /orders/{orderId} {
-      allow create: if isSignedIn(); // only signed-in users can place orders
+      allow create: if isSignedIn();             // only signed-in users can place orders
       allow read, update, delete: if request.auth.uid in [resource.data.buyerId, resource.data.sellerId]; 
       // only buyer or seller can access
     }
