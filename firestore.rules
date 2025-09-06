@@ -1,6 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 🔐 Check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 👤 Users: only owner can edit, any signed-in user can read
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == userId;
+    }
+
+    // 🛒 Products: anyone can read, only signed-in users can create, only owner can update/delete
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // ❤️ Favorites: users can manage only their own
+    match /favorites/{favId} {
+      allow read, create, delete: if request.auth.uid == request.resource.data.userId;
+    }
+
+    // 🛍️ Orders: only buyers and sellers can access
+    match /orders/{orderId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if request.auth.uid in [resource.data.buyerId, resource.data.sellerId];
+    }
+
+    // 🚫 Default: deny everything else
     match /{document=**} {
       allow read, write: if false;
     }
