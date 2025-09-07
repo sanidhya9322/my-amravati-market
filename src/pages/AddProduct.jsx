@@ -104,6 +104,8 @@ const AddProduct = () => {
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         createdAt: serverTimestamp(),
+        featured: false,             // by default not featured
+        featuredExpires: null    
       });
 
       toast.success("✅ Product added successfully!");
