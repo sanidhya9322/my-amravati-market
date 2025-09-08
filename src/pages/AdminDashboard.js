@@ -14,6 +14,9 @@ function AdminDashboard() {
   const [user] = useAuthState(auth);
   const [requests, setRequests] = useState([]);
 
+  // 👉 Change this to YOUR email
+  const ADMIN_EMAIL = "sanipethe22@gmail.com";
+
   // Step 1: Fetch all products with featuredRequest = true
   const fetchRequests = async () => {
     try {
@@ -30,8 +33,10 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    if (user?.email === ADMIN_EMAIL) {
+      fetchRequests();
+    }
+  }, [user]);
 
   // Step 2: Approve request
   const approveFeatured = async (productId) => {
@@ -42,7 +47,7 @@ function AdminDashboard() {
         featuredRequest: false,
       });
       alert("✅ Approved & marked as Featured!");
-      fetchRequests(); // refresh list
+      fetchRequests();
     } catch (err) {
       console.error("Error approving:", err);
       alert("❌ Failed to approve.");
@@ -57,12 +62,21 @@ function AdminDashboard() {
         featuredRequest: false,
       });
       alert("❌ Request rejected.");
-      fetchRequests(); // refresh list
+      fetchRequests();
     } catch (err) {
       console.error("Error rejecting:", err);
       alert("❌ Failed to reject.");
     }
   };
+
+  // 🚫 Restrict access
+  if (!user) {
+    return <p>🔒 Please log in as Admin.</p>;
+  }
+
+  if (user.email !== ADMIN_EMAIL) {
+    return <p>🚫 Access denied. Admins only.</p>;
+  }
 
   return (
     <div className="container my-4">
