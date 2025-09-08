@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { db, storage, auth } from '../firebase/firebaseConfig';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { deleteObject, ref } from 'firebase/storage';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { db, storage, auth } from "../firebase/firebaseConfig";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { deleteObject, ref } from "firebase/storage";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
   const [user] = useAuthState(auth);
@@ -12,12 +20,12 @@ function Dashboard() {
   const fetchUserProducts = async () => {
     if (!user) return;
     try {
-      const q = query(collection(db, 'products'), where('userId', '==', user.uid));
+      const q = query(collection(db, "products"), where("userId", "==", user.uid));
       const snapshot = await getDocs(q);
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setProducts(list);
     } catch (err) {
-      console.error('Error fetching products:', err);
+      console.error("Error fetching products:", err);
     }
   };
 
@@ -26,25 +34,37 @@ function Dashboard() {
   }, [user]);
 
   const handleDelete = async (productId, imageURL) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this product?');
+    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
     if (!confirmDelete) return;
 
     try {
-      // 1. Delete image from Firebase Storage
       if (imageURL) {
         const imageRef = ref(storage, imageURL);
         await deleteObject(imageRef);
       }
 
-      // 2. Delete product document from Firestore
-      await deleteDoc(doc(db, 'products', productId));
+      await deleteDoc(doc(db, "products", productId));
 
-      // 3. Update UI
-      setProducts(prev => prev.filter(p => p.id !== productId));
-      alert('✅ Product deleted successfully!');
+      setProducts((prev) => prev.filter((p) => p.id !== productId));
+      alert("✅ Product deleted successfully!");
     } catch (error) {
-      console.error('❌ Error deleting product:', error);
-      alert('❌ Failed to delete the product.');
+      console.error("❌ Error deleting product:", error);
+      alert("❌ Failed to delete the product.");
+    }
+  };
+
+  // ⭐ Step 1: Add requestFeatured function
+  const requestFeatured = async (productId) => {
+    try {
+      const productRef = doc(db, "products", productId);
+      await updateDoc(productRef, {
+        featuredRequest: true, // user requested
+        featured: false, // not yet approved
+      });
+      alert("✅ Featured request sent! Admin will review it.");
+    } catch (err) {
+      console.error("Error requesting featured:", err);
+      alert("❌ Failed to request featured.");
     }
   };
 
@@ -58,14 +78,20 @@ function Dashboard() {
         {products.length === 0 ? (
           <p>No products uploaded yet.</p>
         ) : (
-          products.map(product => (
+          products.map((product) => (
             <div className="col-md-4 mb-4" key={product.id}>
               <div className="card h-100">
-                <img src={product.imageURL} className="card-img-top" alt={product.productName} />
+                <img
+                  src={product.imageURL}
+                  className="card-img-top"
+                  alt={product.productName}
+                />
                 <div className="card-body">
                   <h5 className="card-title">{product.productName}</h5>
                   <p className="card-text">₹{product.price}</p>
-                  <p className="card-text"><strong>📍</strong> {product.location}</p>
+                  <p className="card-text">
+                    <strong>📍</strong> {product.location}
+                  </p>
                   <p className="card-text">{product.description}</p>
 
                   <div className="d-flex gap-2">
@@ -78,13 +104,24 @@ function Dashboard() {
                     >
                       🗑️ Delete
                     </button>
-                    <button
-                     onClick={() => requestFeatured(product.id)}
-                      className="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-                    >
-                      ⭐ Request Featured
+
+                    {/* ⭐ Request Featured button */}
+                    {product.featured ? (
+                      <span className="px-3 py-1 bg-green-500 text-white rounded-lg">
+                        🌟 Featured
+                      </span>
+                    ) : product.featuredRequest ? (
+                      <span className="px-3 py-1 bg-yellow-400 text-dark rounded-lg">
+                        ⏳ Pending Approval
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => requestFeatured(product.id)}
+                        className="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                      >
+                        ⭐ Request Featured
                       </button>
-                      <RequestFeaturedButton productId={product.id} />
+                    )}
                   </div>
                 </div>
               </div>
