@@ -78,6 +78,13 @@ function Dashboard() {
                     >
                       🗑️ Delete
                     </button>
+                    <button
+                     onClick={() => requestFeatured(product.id)}
+                      className="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                    >
+                      ⭐ Request Featured
+                      </button>
+                      <RequestFeaturedButton productId={product.id} />
                   </div>
                 </div>
               </div>
