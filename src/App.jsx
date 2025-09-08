@@ -34,6 +34,8 @@ function App() {
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+
 
         <Route
           path="/dashboard"
