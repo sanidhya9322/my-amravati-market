@@ -16,6 +16,7 @@ import ProductDetails from './pages/ProductDetails';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { Toaster } from 'react-hot-toast'; // ✅
+import AdminPage from "./pages/AdminPage";
 
 function App() {
   useLenis();
@@ -35,6 +36,8 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin" element={<AdminPage />} />
+
 
 
         <Route
