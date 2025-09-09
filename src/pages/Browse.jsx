@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../firebase/firebaseConfig';
-import {collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc,} from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { serverTimestamp } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
@@ -65,13 +65,23 @@ const Browse = () => {
     .filter((product) => {
       const locationMatch = filterLocation ? product.location === filterLocation : true;
       const categoryMatch = filterCategory ? product.category === filterCategory : true;
-      const matchesTitle = product.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTitle = product.title?.toLowerCase().includes(searchTerm.toLowerCase());
       return locationMatch && categoryMatch && matchesTitle;
     })
     .sort((a, b) => {
+      // ✅ Promoted products first
+      if (a.promoted && !b.promoted) return -1;
+      if (!a.promoted && b.promoted) return 1;
+
+      // ✅ Both promoted → newest promoted first
+      if (a.promoted && b.promoted) {
+        return (b.promotedAt?.seconds || 0) - (a.promotedAt?.seconds || 0);
+      }
+
+      // ✅ Normal sorting
       if (sortOrder === 'priceLowHigh') return a.price - b.price;
       if (sortOrder === 'priceHighLow') return b.price - a.price;
-      if (sortOrder === 'newest') return b.createdAt?.seconds - a.createdAt?.seconds;
+      if (sortOrder === 'newest') return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
       return 0;
     });
 
@@ -106,7 +116,12 @@ const Browse = () => {
               className="border px-3 py-2 rounded w-full text-sm"
             >
               <option value="">All</option>
-              {["Amravati", "Achalpur", "Anjangaon Surji", "Bhatkuli", "Chandur Bazar", "Chandur Railway", "Chikhaldara", "Warud", "Dhamangaon Railway", "Dharni", "Daryapur", "Morshi", "Nandgaon Khandeshwar", "Teosa", "Anjangaon"].map(loc => (
+              {[
+                "Amravati", "Achalpur", "Anjangaon Surji", "Bhatkuli",
+                "Chandur Bazar", "Chandur Railway", "Chikhaldara", "Warud",
+                "Dhamangaon Railway", "Dharni", "Daryapur", "Morshi",
+                "Nandgaon Khandeshwar", "Teosa", "Anjangaon"
+              ].map(loc => (
                 <option key={loc} value={loc}>{loc}</option>
               ))}
             </select>
@@ -120,7 +135,10 @@ const Browse = () => {
               className="border px-3 py-2 rounded w-full text-sm"
             >
               <option value="">All</option>
-              {["Books & Notes", "Handmade Items", "Homemade Food", "Second-hand Items", "New Items",].map(cat => (
+              {[
+                "Books & Notes", "Handmade Items", "Homemade Food",
+                "Second-hand Items", "New Items"
+              ].map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
@@ -153,8 +171,15 @@ const Browse = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-2xl shadow p-3 flex flex-col"
+              className="bg-white rounded-2xl shadow p-3 flex flex-col relative"
             >
+              {/* ⭐ Promoted Badge */}
+              {product.promoted && (
+                <span className="absolute top-2 left-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded">
+                  ⭐ Promoted
+                </span>
+              )}
+
               <Link to={`/product/${product.id}`} className="flex flex-col flex-grow">
                 <img
                   src={product.imageUrl || '/placeholder.png'}
