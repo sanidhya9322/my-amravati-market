@@ -16,7 +16,7 @@ import ProductDetails from './pages/ProductDetails';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { Toaster } from 'react-hot-toast';
-import AdminPage from "./pages/AdminPage";
+import AdminPage from "./pages/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminDashboard"; // ✅ FIX: Import added
 
 function App() {
