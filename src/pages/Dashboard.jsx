@@ -18,6 +18,13 @@ function Dashboard() {
   const [user] = useAuthState(auth);
   const [products, setProducts] = useState([]);
 
+  // 🔹 Promotion Plans
+  const promotionPlans = [
+    { price: 49, days: 7, label: "₹49 - 7 days" },
+    { price: 99, days: 15, label: "₹99 - 15 days" },
+    { price: 199, days: 30, label: "₹199 - 30 days" },
+  ];
+
   // 🔹 Fetch logged-in user products
   const fetchUserProducts = async () => {
     if (!user) return;
@@ -79,22 +86,34 @@ function Dashboard() {
     }
   };
 
-  // 🚀 Promote to Top (Manual UPI flow)
+  // 🚀 Promote to Top with Plan Selection
   const handlePromote = async (productId) => {
-    alert(
-      "📢 To promote your product, please pay to this UPI ID:\n\n💳 9322264040-2@ybl\n\nOnce payment is done, your listing will be boosted."
+    const planChoice = window.prompt(
+      "📢 Choose a promotion plan:\n" +
+        promotionPlans.map((p, i) => `${i + 1}. ${p.label}`).join("\n") +
+        "\n\nEnter 1, 2, or 3:"
     );
 
-    const promotionDays = 7; // valid for 7 days
+    if (!planChoice || isNaN(planChoice)) return;
+
+    const selectedPlan = promotionPlans[parseInt(planChoice) - 1];
+    if (!selectedPlan) return;
+
+    alert(
+      `📢 Please pay ₹${selectedPlan.price} to promote your product:\n\n💳 9322264040-2@ybl\n\nAfter payment, your listing will be boosted for ${selectedPlan.days} days.`
+    );
+
     try {
       await updateDoc(doc(db, "products", productId), {
         isPromoted: true,
+        promotionPlan: selectedPlan.label,
+        promotionPrice: selectedPlan.price,
         promotionExpiresAt: Timestamp.fromDate(
-          new Date(Date.now() + promotionDays * 24 * 60 * 60 * 1000)
+          new Date(Date.now() + selectedPlan.days * 24 * 60 * 60 * 1000)
         ),
       });
 
-      alert("🚀 Your product has been promoted for 7 days!");
+      alert(`🚀 Your product has been promoted for ${selectedPlan.days} days!`);
       fetchUserProducts();
     } catch (err) {
       console.error("Error promoting product:", err);
@@ -135,7 +154,8 @@ function Dashboard() {
                       🚀 Promoted until{" "}
                       {product.promotionExpiresAt
                         .toDate()
-                        .toLocaleDateString()}
+                        .toLocaleDateString()}{" "}
+                      ({product.promotionPlan})
                     </p>
                   ) : (
                     <p className="text-muted">Not Promoted</p>
