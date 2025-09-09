@@ -15,8 +15,9 @@ import useLenis from './hooks/useLenis';
 import ProductDetails from './pages/ProductDetails';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import { Toaster } from 'react-hot-toast'; // ✅
+import { Toaster } from 'react-hot-toast';
 import AdminPage from "./pages/AdminPage";
+import AdminDashboard from "./pages/AdminDashboard"; // ✅ FIX: Import added
 
 function App() {
   useLenis();
@@ -35,10 +36,10 @@ function App() {
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
+
+        {/* ✅ FIX: Give each route a unique path */}
         <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin" element={<AdminPage />} />
-
-
+        <Route path="/admin-page" element={<AdminPage />} />
 
         <Route
           path="/dashboard"
