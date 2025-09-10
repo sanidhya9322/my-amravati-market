@@ -17,6 +17,7 @@ function AdminPage() {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
+  const [plans, setPlans] = useState([]);
 
   // Filters
   const [filterLocation, setFilterLocation] = useState("");
@@ -45,33 +46,50 @@ function AdminPage() {
     setProducts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   };
 
+  // ✅ Fetch promotion plans
+  const fetchPlans = async () => {
+    const snapshot = await getDocs(collection(db, "promotionPlans"));
+    setPlans(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  };
+
   useEffect(() => {
     if (role === "admin") {
       fetchProducts();
+      fetchPlans();
     }
   }, [role]);
 
-  // ✅ Toggle promotion
-  const togglePromotion = async (product) => {
+  // ✅ Promote with plan
+  const promoteProduct = async (productId, days) => {
     try {
-      const productRef = doc(db, "products", product.id);
-      if (product.promoted) {
-        await updateDoc(productRef, { promoted: false, promotedUntil: null });
-        alert("Promotion removed.");
-      } else {
-        const oneWeekLater = new Date();
-        oneWeekLater.setDate(oneWeekLater.getDate() + 7);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + days);
 
-        await updateDoc(productRef, {
-          promoted: true,
-          promotedAt: serverTimestamp(),
-          promotedUntil: oneWeekLater,
-        });
-        alert("Promotion enabled for 7 days.");
-      }
+      await updateDoc(doc(db, "products", productId), {
+        promoted: true,
+        promotedAt: serverTimestamp(),
+        promotedUntil: expiresAt,
+      });
+
+      alert(`🚀 Product promoted for ${days} days!`);
       fetchProducts();
     } catch (err) {
-      console.error("Error updating promotion:", err);
+      console.error("Error promoting product:", err);
+    }
+  };
+
+  // ✅ Remove promotion
+  const removePromotion = async (productId) => {
+    try {
+      await updateDoc(doc(db, "products", productId), {
+        promoted: false,
+        promotedUntil: null,
+      });
+
+      alert("Promotion removed.");
+      fetchProducts();
+    } catch (err) {
+      console.error("Error removing promotion:", err);
     }
   };
 
@@ -92,16 +110,11 @@ function AdminPage() {
       return locationMatch && categoryMatch && matchesTitle;
     })
     .sort((a, b) => {
-      // Promoted first
       if (a.promoted && !b.promoted) return -1;
       if (!a.promoted && b.promoted) return 1;
-
-      // Both promoted → newest promoted first
       if (a.promoted && b.promoted) {
         return (b.promotedAt?.seconds || 0) - (a.promotedAt?.seconds || 0);
       }
-
-      // Normal sorting
       if (sortOrder === "priceLowHigh") return a.price - b.price;
       if (sortOrder === "priceHighLow") return b.price - a.price;
       if (sortOrder === "newest") return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
@@ -137,15 +150,11 @@ function AdminPage() {
           className="border px-3 py-2 rounded text-sm w-full"
         >
           <option value="">All Locations</option>
-          {[
-            "Amravati", "Achalpur", "Anjangaon Surji", "Bhatkuli",
-            "Chandur Bazar", "Chandur Railway", "Chikhaldara", "Warud",
-            "Dhamangaon Railway", "Dharni", "Daryapur", "Morshi",
-            "Nandgaon Khandeshwar", "Teosa", "Anjangaon",
+          {["Amravati","Achalpur","Anjangaon Surji","Bhatkuli","Chandur Bazar",
+            "Chandur Railway","Chikhaldara","Warud","Dhamangaon Railway","Dharni",
+            "Daryapur","Morshi","Nandgaon Khandeshwar","Teosa","Anjangaon"
           ].map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
+            <option key={loc} value={loc}>{loc}</option>
           ))}
         </select>
         <select
@@ -154,11 +163,9 @@ function AdminPage() {
           className="border px-3 py-2 rounded text-sm w-full"
         >
           <option value="">All Categories</option>
-          {["Books & Notes", "Handmade Items", "Homemade Food", "Second-hand Items", "New Items"].map(
+          {["Books & Notes","Handmade Items","Homemade Food","Second-hand Items","New Items"].map(
             (cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
+              <option key={cat} value={cat}>{cat}</option>
             )
           )}
         </select>
@@ -183,7 +190,7 @@ function AdminPage() {
               <th className="p-2">Category</th>
               <th className="p-2">Location</th>
               <th className="p-2">Seller</th>
-              <th className="p-2">Promoted</th>
+              <th className="p-2">Promotion</th>
               <th className="p-2">Actions</th>
             </tr>
           </thead>
@@ -222,13 +229,25 @@ function AdminPage() {
                       </span>
                     )}
                   </td>
-                  <td className="p-2 flex gap-2">
-                    <button
-                      className="px-3 py-1 bg-yellow-500 text-white rounded text-xs"
-                      onClick={() => togglePromotion(product)}
-                    >
-                      {product.promoted ? "Remove" : "Promote"}
-                    </button>
+                  <td className="p-2 flex flex-col gap-2">
+                    {product.promoted ? (
+                      <button
+                        className="px-3 py-1 bg-yellow-500 text-white rounded text-xs"
+                        onClick={() => removePromotion(product.id)}
+                      >
+                        Remove Promotion
+                      </button>
+                    ) : (
+                      plans.map((plan) => (
+                        <button
+                          key={plan.id}
+                          className="px-3 py-1 bg-blue-500 text-white rounded text-xs"
+                          onClick={() => promoteProduct(product.id, plan.days)}
+                        >
+                          Promote ({plan.name} – ₹{plan.price})
+                        </button>
+                      ))
+                    )}
                     <button
                       className="px-3 py-1 bg-red-500 text-white rounded text-xs"
                       onClick={() => handleDelete(product.id)}
