@@ -8,7 +8,6 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
-  setDoc,
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
@@ -34,6 +33,11 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState("products");
   const [newPlan, setNewPlan] = useState({ name: "", price: "", days: "" });
   const [editingPlan, setEditingPlan] = useState(null);
+
+  // --- Users Tab States ---
+  const [userSearch, setUserSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 5;
 
   // ✅ Auth check
   useEffect(() => {
@@ -161,7 +165,7 @@ function AdminPage() {
     fetchUsers();
   };
 
-  // ✅ Filtering + Sorting
+  // ✅ Filtering + Sorting (Products)
   const filteredProducts = products
     .filter((product) => {
       const locationMatch = filterLocation ? product.location === filterLocation : true;
@@ -180,6 +184,16 @@ function AdminPage() {
       if (sortOrder === "newest") return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
       return 0;
     });
+
+  // ✅ Filtering + Pagination (Users)
+  const filteredUsers = users.filter((u) =>
+    u.email.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
+  );
 
   if (loading) return <p>⏳ Checking access...</p>;
   if (!user) return <p>🚫 Please login to access Admin page.</p>;
@@ -445,6 +459,16 @@ function AdminPage() {
       {activeTab === "users" && (
         <div className="bg-white rounded-2xl shadow p-4">
           <h2 className="text-lg font-semibold mb-4">👥 Manage Users</h2>
+
+          {/* 🔍 Search Bar */}
+          <input
+            type="text"
+            placeholder="Search by email..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className="border px-3 py-2 rounded text-sm mb-4 w-full"
+          />
+
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-100">
@@ -454,28 +478,61 @@ function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-b">
-                  <td className="p-2">{u.email}</td>
-                  <td className="p-2">{u.role}</td>
-                  <td className="p-2 flex gap-2">
-                    <button
-                      className="px-3 py-1 bg-blue-500 text-white rounded text-xs"
-                      onClick={() => updateUserRole(u.id, "user")}
-                    >
-                      Make User
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-green-500 text-white rounded text-xs"
-                      onClick={() => updateUserRole(u.id, "admin")}
-                    >
-                      Make Admin
-                    </button>
+              {paginatedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center py-4 text-gray-500">
+                    No users found
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedUsers.map((u) => (
+                  <tr key={u.id} className="border-b">
+                    <td className="p-2">{u.email}</td>
+                    <td className="p-2">{u.role}</td>
+                    <td className="p-2 flex gap-2">
+                      <button
+                        className="px-3 py-1 bg-blue-500 text-white rounded text-xs"
+                        onClick={() => updateUserRole(u.id, "user")}
+                      >
+                        Make User
+                      </button>
+                      <button
+                        className="px-3 py-1 bg-green-500 text-white rounded text-xs"
+                        onClick={() => updateUserRole(u.id, "admin")}
+                      >
+                        Make Admin
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-4">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-gray-300 rounded text-xs disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <span>
+              Page {currentPage} of {Math.ceil(filteredUsers.length / usersPerPage)}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  prev < Math.ceil(filteredUsers.length / usersPerPage) ? prev + 1 : prev
+                )
+              }
+              disabled={currentPage >= Math.ceil(filteredUsers.length / usersPerPage)}
+              className="px-3 py-1 bg-gray-300 rounded text-xs disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </motion.div>
