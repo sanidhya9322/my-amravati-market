@@ -16,13 +16,24 @@ const ProductDetails = () => {
   const [similarLoading, setSimilarLoading] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
 
+  // 👇 For image gallery
+  const [mainImage, setMainImage] = useState(null);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const productRef = doc(db, 'products', id);
         const productSnap = await getDoc(productRef);
         if (productSnap.exists()) {
-          setProduct({ id: productSnap.id, ...productSnap.data() });
+          const data = { id: productSnap.id, ...productSnap.data() };
+          setProduct(data);
+
+          // Set default main image
+          if (data.imageUrls?.length > 0) {
+            setMainImage(data.imageUrls[0]);
+          } else if (data.imageUrl) {
+            setMainImage(data.imageUrl);
+          }
         } else {
           toast.error('Product not found');
           navigate('/browse');
@@ -87,15 +98,32 @@ const ProductDetails = () => {
       </button>
 
       <div className="bg-white rounded-2xl shadow p-5 relative">
-        {/* Image + Share Button */}
+        {/* 🖼 Image Gallery + Share */}
         <div className="relative">
-          {product.imageUrl && (
+          {mainImage && (
             <img
-              src={product.imageUrl}
+              src={mainImage}
               alt={product.title}
-              className="w-full max-h-[500px] object-cover rounded-xl mb-4"
+              className="w-full max-h-[500px] object-contain rounded-xl mb-4"
             />
           )}
+
+          {/* Thumbnails */}
+          <div className="flex gap-2 overflow-x-auto mb-4">
+            {(product.imageUrls?.length > 0 ? product.imageUrls : [product.imageUrl])
+              .filter(Boolean)
+              .map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`thumb-${idx}`}
+                  onClick={() => setMainImage(img)}
+                  className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
+                    mainImage === img ? 'border-blue-500' : 'border-gray-300'
+                  }`}
+                />
+              ))}
+          </div>
 
           {/* Share Dropdown Button */}
           <div className="absolute top-4 right-4">
@@ -139,6 +167,7 @@ const ProductDetails = () => {
           </div>
         </div>
 
+        {/* Product Info */}
         <h1 className="text-2xl font-bold mb-2">{product.title}</h1>
         <p className="text-gray-700 mb-2">{product.description}</p>
         <div className="text-xl text-green-600 font-bold mb-2">₹{product.price}</div>
@@ -188,13 +217,11 @@ const ProductDetails = () => {
                 className="bg-white rounded-2xl shadow p-3"
               >
                 <Link to={`/product/${p.id}`} className="block">
-                  {p.imageUrl && (
-                    <img
-                      src={p.imageUrl}
-                      alt={p.title}
-                      className="w-full h-36 object-cover rounded-xl mb-2"
-                    />
-                  )}
+                  <img
+                    src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
+                    alt={p.title}
+                    className="w-full h-36 object-cover rounded-xl mb-2"
+                  />
                   <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
                   <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
                   <p className="text-xs text-gray-500">📌 {p.location}</p>

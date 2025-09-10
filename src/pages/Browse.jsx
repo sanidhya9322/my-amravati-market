@@ -182,10 +182,14 @@ const Browse = () => {
 
               <Link to={`/product/${product.id}`} className="flex flex-col flex-grow">
                 <img
-                  src={product.imageUrl || '/placeholder.png'}
-                  alt={product.title}
-                  className="w-full h-36 object-cover rounded-xl mb-2"
-                  loading="lazy"
+                  src={
+      product.imageUrls?.[0] || // ✅ first image from array
+      product.imageUrl ||       // ✅ fallback for old products
+      '/placeholder.png'
+    }
+    alt={product.title}
+    className="w-full h-36 object-cover rounded-xl mb-2"
+    loading="lazy"
                 />
                 <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
                 <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>

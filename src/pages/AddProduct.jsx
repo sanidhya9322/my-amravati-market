@@ -15,16 +15,14 @@ const AddProduct = () => {
     sellerPhone: "",
   });
 
-  const [image, setImage] = useState(null);
-  const [previewURL, setPreviewURL] = useState(null);
+  const [images, setImages] = useState([]); // multiple images
+  const [previewURLs, setPreviewURLs] = useState([]);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
-  // 🚦 Daily product post limit (e.g., 3)
   const DAILY_LIMIT = 3;
 
   useEffect(() => {
-    // Auto-fill location using GPS (if allowed)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -40,9 +38,7 @@ const AddProduct = () => {
             console.warn("Location fetch failed:", error);
           }
         },
-        (error) => {
-          console.warn("Geolocation permission denied.");
-        }
+        () => console.warn("Geolocation permission denied.")
       );
     }
   }, []);
@@ -55,16 +51,16 @@ const AddProduct = () => {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
-    if (file) setPreviewURL(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    setImages(files);
+    setPreviewURLs(files.map((file) => URL.createObjectURL(file)));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!image) {
-      toast.error("Please select an image.");
+    if (images.length === 0) {
+      toast.error("Please select at least one image.");
       return;
     }
 
@@ -93,19 +89,24 @@ const AddProduct = () => {
         return;
       }
 
-      const imageRef = ref(storage, `productImages/${Date.now()}_${image.name}`);
-      await uploadBytes(imageRef, image);
-      const imageUrl = await getDownloadURL(imageRef);
+      // Upload all images
+      const imageUrls = [];
+      for (const image of images) {
+        const imageRef = ref(storage, `productImages/${Date.now()}_${image.name}`);
+        await uploadBytes(imageRef, image);
+        const imageUrl = await getDownloadURL(imageRef);
+        imageUrls.push(imageUrl);
+      }
 
       await addDoc(productsRef, {
         ...formData,
         price: parseFloat(formData.price),
-        imageUrl,
+        imageUrls, // store multiple
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         createdAt: serverTimestamp(),
-        featured: false,             // by default not featured
-        featuredExpires: null    
+        featured: false,
+        featuredExpires: null,
       });
 
       toast.success("✅ Product added successfully!");
@@ -181,7 +182,7 @@ const AddProduct = () => {
               <option>🧵 Handmade Items</option>
               <option>🍱 Homemade Food</option>
               <option>♻️ Second-hand Items</option>
-              <option>🆕 New Items</option>                             
+              <option>🆕 New Items</option>
             </select>
 
             <input
@@ -197,22 +198,28 @@ const AddProduct = () => {
 
           <div>
             <label className="block text-sm mb-2 font-medium text-gray-700">
-              Upload Product Image
+              Upload Product Images
             </label>
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
               required
               className="w-full px-4 py-2 border rounded-xl shadow-sm"
             />
 
-            {previewURL && (
-              <img
-                src={previewURL}
-                alt="Preview"
-                className="mt-4 rounded-xl w-full h-48 object-cover border shadow"
-              />
+            {previewURLs.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {previewURLs.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Preview ${idx}`}
+                    className="rounded-xl w-full h-32 object-cover border shadow"
+                  />
+                ))}
+              </div>
             )}
           </div>
 
