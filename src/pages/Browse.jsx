@@ -181,23 +181,37 @@ const Browse = () => {
               )}
 
               <Link to={`/product/${product.id}`} className="flex flex-col flex-grow">
-                <img
-                  src={
+                {/* 🖼 Product Image Wrapper */}
+<div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-200">
+  {/* Skeleton Loader */}
+  <div className="absolute inset-0 animate-pulse bg-gray-300" />
+
+  <img
+    src={
       product.imageUrls?.[0] || // ✅ first image from array
       product.imageUrl ||       // ✅ fallback for old products
       '/placeholder.png'
     }
     alt={product.title}
-    className="w-full h-36 object-cover rounded-xl mb-2"
+    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
     loading="lazy"
-                />
-                <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
-                <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>
-                <p className="text-sm font-bold text-green-600 mb-1">₹{product.price}</p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span className="bg-blue-100 px-2 py-1 rounded-full">{product.category}</span>
-                  <span className="bg-yellow-100 px-2 py-1 rounded-full">{product.location}</span>
-                </div>
+    onLoad={(e) => e.target.previousSibling?.remove()} // Remove skeleton once loaded
+  />
+</div>
+
+{/* 📄 Product Info */}
+<div className="mt-2 flex flex-col flex-grow">
+  <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
+  <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>
+  <p className="text-sm font-bold text-green-600 mb-2">₹{product.price}</p>
+
+  {/* 🏷️ Tags */}
+  <div className="flex justify-between text-xs text-gray-500">
+    <span className="bg-blue-100 px-2 py-1 rounded-full">{product.category}</span>
+    <span className="bg-yellow-100 px-2 py-1 rounded-full">{product.location}</span>
+  </div>
+</div>
+
               </Link>
 
               <button
