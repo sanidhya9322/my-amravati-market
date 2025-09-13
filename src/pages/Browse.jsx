@@ -202,7 +202,8 @@ const Browse = () => {
 
               <button
                 className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs px-3 py-2 rounded mt-2"
-                onClick={() => handleAddToFavorites(product)}
+                onClick={() => handleAddToFavorites(product)}                
+
               >
                 ❤️ Add to Favorites
               </button>
