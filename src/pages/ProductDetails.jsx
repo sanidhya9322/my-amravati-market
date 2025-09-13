@@ -104,7 +104,7 @@ const ProductDetails = () => {
             <img
               src={mainImage}
               alt={product.title}
-              className="w-full max-h-[500px] object-contain rounded-xl mb-4"
+              className="w-full max-h-[400px] object-contain rounded-xl mb-4 bg-gray-100"
             />
           )}
 
