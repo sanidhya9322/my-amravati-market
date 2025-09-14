@@ -69,16 +69,13 @@ const Browse = () => {
       return locationMatch && categoryMatch && matchesTitle;
     })
     .sort((a, b) => {
-      // ✅ Promoted products first
       if (a.promoted && !b.promoted) return -1;
       if (!a.promoted && b.promoted) return 1;
 
-      // ✅ Both promoted → newest promoted first
       if (a.promoted && b.promoted) {
         return (b.promotedAt?.seconds || 0) - (a.promotedAt?.seconds || 0);
       }
 
-      // ✅ Normal sorting
       if (sortOrder === 'priceLowHigh') return a.price - b.price;
       if (sortOrder === 'priceHighLow') return b.price - a.price;
       if (sortOrder === 'newest') return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
@@ -92,10 +89,12 @@ const Browse = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 text-center">🛒 Explore MyAmravati Market</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-6 text-center">
+        🛒 Explore MyAmravati Market
+      </h1>
 
       {/* Filters */}
-      <div className="mb-4 space-y-3">
+      <div className="mb-6 space-y-3">
         <div>
           <label className="font-semibold block mb-1 text-sm">Search Products:</label>
           <input
@@ -103,7 +102,7 @@ const Browse = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by title..."
-            className="border px-3 py-2 rounded w-full text-sm"
+            className="border px-3 py-2 rounded-lg w-full text-sm focus:ring focus:ring-blue-300"
           />
         </div>
 
@@ -113,7 +112,7 @@ const Browse = () => {
             <select
               value={filterLocation}
               onChange={(e) => setFilterLocation(e.target.value)}
-              className="border px-3 py-2 rounded w-full text-sm"
+              className="border px-3 py-2 rounded-lg w-full text-sm focus:ring focus:ring-blue-300"
             >
               <option value="">All</option>
               {[
@@ -132,7 +131,7 @@ const Browse = () => {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="border px-3 py-2 rounded w-full text-sm"
+              className="border px-3 py-2 rounded-lg w-full text-sm focus:ring focus:ring-blue-300"
             >
               <option value="">All</option>
               {[
@@ -149,7 +148,7 @@ const Browse = () => {
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="border px-3 py-2 rounded w-full text-sm"
+              className="border px-3 py-2 rounded-lg w-full text-sm focus:ring focus:ring-blue-300"
             >
               <option value="newest">Newest First</option>
               <option value="priceLowHigh">Price: Low to High</option>
@@ -160,7 +159,7 @@ const Browse = () => {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {filteredProducts.length === 0 ? (
           <p className="text-center col-span-full text-sm">No products found.</p>
         ) : (
@@ -171,53 +170,47 @@ const Browse = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-2xl shadow p-3 flex flex-col relative"
+              className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 flex flex-col relative"
             >
               {/* ⭐ Promoted Badge */}
               {product.promoted && (
-                <span className="absolute top-2 left-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded">
+                <span className="absolute top-2 left-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded-full shadow">
                   ⭐ Promoted
                 </span>
               )}
 
               <Link to={`/product/${product.id}`} className="flex flex-col flex-grow">
-                {/* 🖼 Product Image Wrapper */}
-<div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-200">
-  {/* Skeleton Loader */}
-  <div className="absolute inset-0 animate-pulse bg-gray-300" />
+                {/* 🖼 Product Image */}
+                <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+                  <img
+                    src={
+                      product.imageUrls?.[0] ||
+                      product.imageUrl ||
+                      '/placeholder.png'
+                    }
+                    alt={product.title}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
 
-  <img
-    src={
-      product.imageUrls?.[0] || // ✅ first image from array
-      product.imageUrl ||       // ✅ fallback for old products
-      '/placeholder.png'
-    }
-    alt={product.title}
-    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-    loading="lazy"
-    onLoad={(e) => e.target.previousSibling?.remove()} // Remove skeleton once loaded
-  />
-</div>
+                {/* 📄 Product Info */}
+                <div className="mt-3 flex flex-col flex-grow">
+                  <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{product.description}</p>
+                  <p className="text-base font-bold text-green-600 mb-2">₹{product.price}</p>
 
-{/* 📄 Product Info */}
-<div className="mt-2 flex flex-col flex-grow">
-  <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
-  <p className="text-xs text-gray-600 mb-1 line-clamp-2">{product.description}</p>
-  <p className="text-sm font-bold text-green-600 mb-2">₹{product.price}</p>
-
-  {/* 🏷️ Tags */}
-  <div className="flex justify-between text-xs text-gray-500">
-    <span className="bg-blue-100 px-2 py-1 rounded-full">{product.category}</span>
-    <span className="bg-yellow-100 px-2 py-1 rounded-full">{product.location}</span>
-  </div>
-</div>
-
+                  {/* 🏷️ Tags */}
+                  <div className="flex justify-between text-xs text-gray-500 mt-auto">
+                    <span className="bg-blue-100 px-2 py-1 rounded-full">{product.category}</span>
+                    <span className="bg-yellow-100 px-2 py-1 rounded-full">{product.location}</span>
+                  </div>
+                </div>
               </Link>
 
               <button
-                className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs px-3 py-2 rounded mt-2"
-                onClick={() => handleAddToFavorites(product)}                
-
+                className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs px-3 py-2 rounded-lg mt-3 transition-colors"
+                onClick={() => handleAddToFavorites(product)}
               >
                 ❤️ Add to Favorites
               </button>

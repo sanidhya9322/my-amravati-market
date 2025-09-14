@@ -85,31 +85,33 @@ const ProductDetails = () => {
 
   return (
     <motion.div
-      className="px-4 py-6 min-h-screen bg-gray-50 max-w-5xl mx-auto"
+      className="px-4 py-6 min-h-screen bg-gray-50 max-w-6xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 text-blue-600 text-sm underline"
+        className="mb-4 text-blue-600 text-sm hover:underline"
       >
         ← Back to Browse
       </button>
 
-      <div className="bg-white rounded-2xl shadow p-5 relative">
-        {/* 🖼 Image Gallery + Share */}
-        <div className="relative">
+      {/* Product Card */}
+      <div className="bg-white rounded-2xl shadow-md p-5 relative grid md:grid-cols-2 gap-6">
+        {/* 🖼 Image Gallery */}
+        <div>
           {mainImage && (
             <img
               src={mainImage}
               alt={product.title}
-              className="w-full max-h-[400px] object-contain rounded-xl mb-4 bg-gray-100"
+              className="w-full max-h-[450px] object-contain rounded-xl bg-gray-100 shadow"
             />
           )}
 
           {/* Thumbnails */}
-          <div className="flex gap-2 overflow-x-auto mb-4">
+          <div className="flex gap-2 overflow-x-auto mt-3">
             {(product.imageUrls?.length > 0 ? product.imageUrls : [product.imageUrl])
               .filter(Boolean)
               .map((img, idx) => (
@@ -118,14 +120,17 @@ const ProductDetails = () => {
                   src={img}
                   alt={`thumb-${idx}`}
                   onClick={() => setMainImage(img)}
-                  className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
-                    mainImage === img ? 'border-blue-500' : 'border-gray-300'
+                  className={`w-20 h-20 object-cover rounded-lg cursor-pointer border transition ${
+                    mainImage === img ? 'border-blue-500 shadow' : 'border-gray-300'
                   }`}
                 />
               ))}
           </div>
+        </div>
 
-          {/* Share Dropdown Button */}
+        {/* Product Info */}
+        <div>
+          {/* Share Button */}
           <div className="absolute top-4 right-4">
             <button
               onClick={() => setShareOpen(!shareOpen)}
@@ -165,42 +170,42 @@ const ProductDetails = () => {
               </div>
             )}
           </div>
+
+          <h1 className="text-2xl font-bold mb-3">{product.title}</h1>
+          <p className="text-gray-700 mb-3">{product.description}</p>
+          <div className="text-2xl text-green-600 font-bold mb-4">₹{product.price}</div>
+
+          {/* Tags */}
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-yellow-100 rounded-full">
+              🏷 {product.category}
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-pink-100 rounded-full">
+              <FaMapMarkerAlt className="text-pink-600" /> {product.location}
+            </span>
+          </div>
+
+          {/* Contact Seller */}
+          {product.contact || product.sellerPhone ? (
+            <a
+              href={`https://wa.me/91${product.contact || product.sellerPhone}?text=${encodeURIComponent(
+                `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-3 rounded-lg shadow transition">
+                Contact Seller via WhatsApp
+              </button>
+            </a>
+          ) : (
+            <p className="text-red-500 text-sm">No seller contact info available.</p>
+          )}
         </div>
-
-        {/* Product Info */}
-        <h1 className="text-2xl font-bold mb-2">{product.title}</h1>
-        <p className="text-gray-700 mb-2">{product.description}</p>
-        <div className="text-xl text-green-600 font-bold mb-2">₹{product.price}</div>
-
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-yellow-100 rounded-full">
-            🏷 {product.category}
-          </span>
-          <span className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-pink-100 rounded-full">
-            <FaMapMarkerAlt className="text-pink-600" /> {product.location}
-          </span>
-        </div>
-
-        {/* Contact Seller */}
-        {product.contact || product.sellerPhone ? (
-          <a
-            href={`https://wa.me/91${product.contact || product.sellerPhone}?text=${encodeURIComponent(
-              `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <button className="w-full bg-blue-500 hover:bg-blue-600 text-black px-4 py-2 rounded">
-              Contact Seller via WhatsApp
-            </button>
-          </a>
-        ) : (
-          <p className="text-red-500 text-sm">No seller contact info available.</p>
-        )}
       </div>
 
       {/* Similar Products */}
-      <div className="mt-10">
+      <div className="mt-12">
         <h3 className="text-lg font-semibold mb-4">🧭 Similar Products</h3>
         {similarLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -209,18 +214,18 @@ const ProductDetails = () => {
             ))}
           </div>
         ) : similarProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {similarProducts.map((p) => (
               <motion.div
                 key={p.id}
                 whileHover={{ scale: 1.02 }}
-                className="bg-white rounded-2xl shadow p-3"
+                className="bg-white rounded-2xl shadow hover:shadow-md transition p-3"
               >
                 <Link to={`/product/${p.id}`} className="block">
                   <img
                     src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
                     alt={p.title}
-                    className="w-full h-36 object-cover rounded-xl mb-2"
+                    className="w-full h-36 object-cover rounded-xl mb-3"
                   />
                   <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
                   <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
