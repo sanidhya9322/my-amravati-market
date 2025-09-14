@@ -28,6 +28,13 @@ function App() {
       {/* ✅ One global Toaster for the entire app */}
       <Toaster position="top-right" reverseOrder={false} />
 
+      {/* 🔹 Tailwind Test Box */}
+      <div className="p-4">
+        <div className="bg-blue-500 text-white text-center py-2 rounded-lg shadow-md">
+          🚀 Tailwind is working!
+        </div>
+      </div>
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -78,5 +85,6 @@ function App() {
     </Router>
   );
 }
+
 
 export default App;
