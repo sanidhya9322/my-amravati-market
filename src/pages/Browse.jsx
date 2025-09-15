@@ -106,7 +106,7 @@ const Browse = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="font-semibold block mb-1 text-sm">Filter by Location:</label>
             <select
@@ -159,7 +159,7 @@ const Browse = () => {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredProducts.length === 0 ? (
           <p className="text-center col-span-full text-sm">No products found.</p>
         ) : (
@@ -196,9 +196,10 @@ const Browse = () => {
 
                 {/* 📄 Product Info */}
                 <div className="mt-3 flex flex-col flex-grow">
-                  <h2 className="text-sm font-semibold mb-1 line-clamp-2">{product.title}</h2>
-                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{product.description}</p>
-                  <p className="text-base font-bold text-green-600 mb-2">₹{product.price}</p>
+                  <h2 className="text-sm sm:text-base font-semibold mb-1 line-clamp-2">{product.title}</h2>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
+                  <p className="text-sm sm:text-base font-bold text-green-600 mb-2">₹{product.price}</p>
+
 
                   {/* 🏷️ Tags */}
                   <div className="flex justify-between text-xs text-gray-500 mt-auto">
@@ -209,7 +210,7 @@ const Browse = () => {
               </Link>
 
               <button
-                className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs px-3 py-2 rounded-lg mt-3 transition-colors"
+            className="w-full border border-red-500 text-red-500 hover:bg-red-100 text-xs sm:text-sm px-2 sm:px-3 py-2 rounded-lg mt-3 transition-colors"
                 onClick={() => handleAddToFavorites(product)}
               >
                 ❤️ Add to Favorites

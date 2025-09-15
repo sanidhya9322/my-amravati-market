@@ -99,19 +99,19 @@ const ProductDetails = () => {
       </button>
 
       {/* Product Card */}
-      <div className="bg-white rounded-2xl shadow-md p-5 relative grid md:grid-cols-2 gap-6">
+      <div className="bg-white rounded-2xl shadow p-5 relative grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 🖼 Image Gallery */}
         <div>
           {mainImage && (
             <img
               src={mainImage}
               alt={product.title}
-              className="w-full max-h-[450px] object-contain rounded-xl bg-gray-100 shadow"
+             className="w-full aspect-square object-contain rounded-xl bg-gray-100"
             />
           )}
 
           {/* Thumbnails */}
-          <div className="flex gap-2 overflow-x-auto mt-3">
+          <div className="flex gap-2 overflow-x-auto mb-4 scrollbar-hide">
             {(product.imageUrls?.length > 0 ? product.imageUrls : [product.imageUrl])
               .filter(Boolean)
               .map((img, idx) => (
@@ -187,20 +187,23 @@ const ProductDetails = () => {
 
           {/* Contact Seller */}
           {product.contact || product.sellerPhone ? (
-            <a
-              href={`https://wa.me/91${product.contact || product.sellerPhone}?text=${encodeURIComponent(
-                `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-3 rounded-lg shadow transition">
-                Contact Seller via WhatsApp
-              </button>
-            </a>
-          ) : (
-            <p className="text-red-500 text-sm">No seller contact info available.</p>
-          )}
+  <div className="fixed bottom-0 left-0 w-full bg-white p-3 border-t md:static md:border-none md:p-0">
+    <a
+      href={`https://wa.me/91${product.contact || product.sellerPhone}?text=${encodeURIComponent(
+        `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
+      )}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block"
+    >
+      <button className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-lg shadow md:py-2">
+        💬 Contact Seller via WhatsApp
+      </button>
+    </a>
+  </div>
+) : (
+  <p className="text-red-500 text-sm">No seller contact info available.</p>
+)}
         </div>
       </div>
 
@@ -208,7 +211,7 @@ const ProductDetails = () => {
       <div className="mt-12">
         <h3 className="text-lg font-semibold mb-4">🧭 Similar Products</h3>
         {similarLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="animate-pulse bg-white p-4 rounded-2xl shadow h-48"></div>
             ))}
@@ -217,21 +220,23 @@ const ProductDetails = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {similarProducts.map((p) => (
               <motion.div
-                key={p.id}
-                whileHover={{ scale: 1.02 }}
-                className="bg-white rounded-2xl shadow hover:shadow-md transition p-3"
-              >
-                <Link to={`/product/${p.id}`} className="block">
-                  <img
-                    src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
-                    alt={p.title}
-                    className="w-full h-36 object-cover rounded-xl mb-3"
-                  />
-                  <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
-                  <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
-                  <p className="text-xs text-gray-500">📌 {p.location}</p>
-                </Link>
-              </motion.div>
+  key={p.id}
+  whileHover={{ scale: 1.02 }}
+>
+  <Link
+    to={`/product/${p.id}`}
+    className="block bg-white rounded-2xl shadow p-3 hover:shadow-md transition"
+  >
+    <img
+      src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
+      alt={p.title}
+      className="w-full h-36 object-cover rounded-xl mb-2"
+    />
+    <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
+    <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
+    <p className="text-xs text-gray-500">📌 {p.location}</p>
+  </Link>
+</motion.div>
             ))}
           </div>
         ) : (
