@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 function Navbar() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null); // 🔑 store role (admin / user)
+  const [menuOpen, setMenuOpen] = useState(false); // ✅ mobile menu toggle
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,46 +32,98 @@ function Navbar() {
   };
 
   return (
-    <div className="navbar navbar-expand-lg navbar-light px-2 flex-wrap">
-      <span className="navbar-brand fw-bold fs-4">MyAmravati Market</span>
-      <div></div>
-      <div className="ml-auto d-flex align-items-center">
-        {user ? (
-          <>
-            <Link to="/dashboard" className="btn btn-outline-primary me-2">
-              Dashboard
-            </Link>
+    <nav className="bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo / Brand */}
+          <Link to="/" className="text-xl font-bold text-blue-600">
+            MyAmravati Market
+          </Link>
 
-            {/* 🔑 Show only if role === "admin" */}
-            {role === "admin" && (
-              <Link to="/admin" className="btn btn-warning me-2">
-                ⚡ Admin
-              </Link>
-            )}
-
-            <span className="me-3">{user.email}</span>
-            <button
-              onClick={handleLogout}
-              className="btn btn-outline-danger btn-sm me-2"
+          {/* Hamburger Menu (Mobile only) */}
+          <button
+            className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-100"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <svg
+              className="h-6 w-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              Logout
-            </button>
-            <Link to="/favorites" className="nav-link">
-              ❤️ Wishlist
-            </Link>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="btn btn-outline-primary me-2">
-              Login
-            </Link>
-            <Link to="/signup" className="btn btn-outline-success">
-              Signup
-            </Link>
-          </>
-        )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+
+          {/* Menu Items */}
+          <div
+            className={`${
+              menuOpen ? "flex" : "hidden"
+            } sm:flex flex-col sm:flex-row sm:items-center sm:gap-3 absolute sm:static top-16 left-0 w-full sm:w-auto bg-white sm:bg-transparent shadow sm:shadow-none p-4 sm:p-0`}
+          >
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="px-3 py-1 border border-blue-600 text-blue-600 rounded hover:bg-blue-600 hover:text-white text-sm mb-2 sm:mb-0"
+                >
+                  Dashboard
+                </Link>
+
+                {/* 🔑 Show only if role === "admin" */}
+                {role === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 text-sm mb-2 sm:mb-0"
+                  >
+                    ⚡ Admin
+                  </Link>
+                )}
+
+                <span className="text-gray-700 text-sm mb-2 sm:mb-0">
+                  {user.email}
+                </span>
+
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1 border border-red-600 text-red-600 rounded hover:bg-red-600 hover:text-white text-sm mb-2 sm:mb-0"
+                >
+                  Logout
+                </button>
+
+                <Link
+                  to="/favorites"
+                  className="px-3 py-1 text-gray-600 hover:text-red-500 text-sm"
+                >
+                  ❤️ Wishlist
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-3 py-1 border border-blue-600 text-blue-600 rounded hover:bg-blue-600 hover:text-white text-sm mb-2 sm:mb-0"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-3 py-1 border border-green-600 text-green-600 rounded hover:bg-green-600 hover:text-white text-sm"
+                >
+                  Signup
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }
 
