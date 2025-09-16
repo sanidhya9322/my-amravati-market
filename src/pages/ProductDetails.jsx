@@ -111,7 +111,7 @@ const ProductDetails = () => {
           )}
 
           {/* Thumbnails */}
-          <div className="flex gap-2 overflow-x-auto mb-4 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto sm:grid sm:grid-cols-5 mb-4">
             {(product.imageUrls?.length > 0 ? product.imageUrls : [product.imageUrl])
               .filter(Boolean)
               .map((img, idx) => (
@@ -222,16 +222,18 @@ const ProductDetails = () => {
               <motion.div
   key={p.id}
   whileHover={{ scale: 1.02 }}
+  className="bg-white rounded-2xl shadow p-3 flex flex-col h-full"
 >
   <Link
     to={`/product/${p.id}`}
     className="block bg-white rounded-2xl shadow p-3 hover:shadow-md transition"
   >
     <img
-      src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
-      alt={p.title}
-      className="w-full h-36 object-cover rounded-xl mb-2"
-    />
+  src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
+  alt={p.title}
+  className="w-full h-32 sm:h-36 object-cover rounded-xl mb-2"
+/>
+   <div className="flex flex-col flex-grow"></div>
     <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
     <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
     <p className="text-xs text-gray-500">📌 {p.location}</p>
