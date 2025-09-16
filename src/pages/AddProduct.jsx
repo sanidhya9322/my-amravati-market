@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { storage, db, auth } from "../firebase/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -15,13 +22,14 @@ const AddProduct = () => {
     sellerPhone: "",
   });
 
-  const [images, setImages] = useState([]); // multiple images
+  const [images, setImages] = useState([]);
   const [previewURLs, setPreviewURLs] = useState([]);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
   const DAILY_LIMIT = 3;
 
+  // ✅ Auto-detect user location (city/village)
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -32,8 +40,14 @@ const AddProduct = () => {
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
             );
             const data = await response.json();
-            const cityOrVillage = data.address.village || data.address.city || data.address.town || "";
-            setFormData((prev) => ({ ...prev, location: cityOrVillage }));
+            const place =
+              data.address?.village ||
+              data.address?.city ||
+              data.address?.town ||
+              "";
+            if (place) {
+              setFormData((prev) => ({ ...prev, location: place }));
+            }
           } catch (error) {
             console.warn("Location fetch failed:", error);
           }
@@ -43,6 +57,7 @@ const AddProduct = () => {
     }
   }, []);
 
+  // ✅ Handle input changes
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -50,28 +65,36 @@ const AddProduct = () => {
     }));
   };
 
+  // ✅ Handle image uploads (preview)
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setImages(files);
     setPreviewURLs(files.map((file) => URL.createObjectURL(file)));
   };
 
+  // ✅ Submit product
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.title || !formData.description || !formData.price) {
+      toast.error("⚠️ Please fill all required fields.");
+      return;
+    }
+
     if (images.length === 0) {
-      toast.error("Please select at least one image.");
+      toast.error("⚠️ Please select at least one image.");
       return;
     }
 
     if (!auth.currentUser) {
-      toast.error("You must be logged in to add a product.");
+      toast.error("🚫 You must be logged in to add a product.");
       return;
     }
 
     setUploading(true);
 
     try {
+      // ✅ Daily post limit check
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -89,19 +112,23 @@ const AddProduct = () => {
         return;
       }
 
-      // Upload all images
+      // ✅ Upload all images to Firebase
       const imageUrls = [];
       for (const image of images) {
-        const imageRef = ref(storage, `productImages/${Date.now()}_${image.name}`);
+        const imageRef = ref(
+          storage,
+          `productImages/${Date.now()}_${image.name}`
+        );
         await uploadBytes(imageRef, image);
         const imageUrl = await getDownloadURL(imageRef);
         imageUrls.push(imageUrl);
       }
 
+      // ✅ Save product in Firestore
       await addDoc(productsRef, {
         ...formData,
         price: parseFloat(formData.price),
-        imageUrls, // store multiple
+        imageUrls,
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         createdAt: serverTimestamp(),
@@ -113,7 +140,7 @@ const AddProduct = () => {
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (error) {
       console.error("Error adding product:", error);
-      toast.error("Something went wrong. Try again.");
+      toast.error("❌ Something went wrong. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -123,12 +150,13 @@ const AddProduct = () => {
     <div className="flex justify-center items-center py-10 px-4 bg-gray-100 min-h-screen">
       <Toaster position="top-center" reverseOrder={false} />
 
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8">
-        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-800">
           📦 Add New Product
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Title */}
           <input
             type="text"
             name="title"
@@ -136,9 +164,10 @@ const AddProduct = () => {
             onChange={handleChange}
             placeholder="Product Name"
             required
-            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
+          {/* Description */}
           <textarea
             name="description"
             value={formData.description}
@@ -146,10 +175,11 @@ const AddProduct = () => {
             placeholder="Feature Description"
             required
             rows="4"
-            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
           ></textarea>
 
-          <div className="flex flex-col md:flex-row gap-4">
+          {/* Price + Location */}
+          <div className="flex flex-col sm:flex-row gap-4">
             <input
               type="number"
               name="price"
@@ -157,9 +187,8 @@ const AddProduct = () => {
               onChange={handleChange}
               placeholder="Price (₹)"
               required
-              className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-
             <input
               type="text"
               name="location"
@@ -167,16 +196,17 @@ const AddProduct = () => {
               onChange={handleChange}
               placeholder="Your Village / Local Area"
               required
-              className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4">
+          {/* Category + Phone */}
+          <div className="flex flex-col sm:flex-row gap-4">
             <select
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option>📚 Books & Notes</option>
               <option>🧵 Handmade Items</option>
@@ -192,10 +222,11 @@ const AddProduct = () => {
               onChange={handleChange}
               placeholder="WhatsApp Number"
               required
-              className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* Image Upload */}
           <div>
             <label className="block text-sm mb-2 font-medium text-gray-700">
               Upload Product Images
@@ -206,11 +237,11 @@ const AddProduct = () => {
               multiple
               onChange={handleImageChange}
               required
-              className="w-full px-4 py-2 border rounded-xl shadow-sm"
+              className="w-full px-4 py-2 border rounded-xl shadow-sm text-sm sm:text-base"
             />
 
             {previewURLs.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                 {previewURLs.map((url, idx) => (
                   <img
                     key={idx}
@@ -223,14 +254,17 @@ const AddProduct = () => {
             )}
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={uploading}
-            className={`w-full py-3 rounded-xl font-semibold text-black text-lg shadow-md transition ${
-              uploading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+            className={`w-full py-3 rounded-xl font-semibold text-white text-base sm:text-lg shadow-md transition ${
+              uploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
             }`}
           >
-            {uploading ? "Uploading..." : "🚀 Add Product"}
+            {uploading ? "⏳ Uploading..." : "🚀 Add Product"}
           </button>
         </form>
       </div>

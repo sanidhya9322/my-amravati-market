@@ -1,12 +1,9 @@
-import React, { useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, useInView } from 'framer-motion';
-import './Home.css';
-import toast from "react-hot-toast";
-
+import React, { useRef } from "react";
+import { Link } from "react-router-dom";
+import { motion, useInView } from "framer-motion";
 
 function Home() {
-  // Refs and InView triggers for each card
+  // Refs for scroll animations
   const step1Ref = useRef(null);
   const step2Ref = useRef(null);
   const step3Ref = useRef(null);
@@ -17,50 +14,64 @@ function Home() {
 
   return (
     <>
+      {/* === Navbar === */}
       <motion.header
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="navbar navbar-dark bg-dark px-4 py-2 justify-content-between"
+        className="bg-gray-900 text-white flex justify-between items-center px-6 py-3 shadow-md"
       >
-        <span className="navbar-brand fw-bold fs-4">MyAmravati Market</span>
-        <div>
-         <Link to="/" className="text-white me-3 text-decoration-none">Home</Link>
-        </div>
+        <span className="font-bold text-lg sm:text-xl">
+          MyAmravati Market
+        </span>
+        <nav className="space-x-4 text-sm sm:text-base">
+          <Link to="/" className="hover:text-blue-400 transition">
+            Home
+          </Link>
+          <Link to="/browse" className="hover:text-blue-400 transition">
+            Browse
+          </Link>
+          <Link to="/add-product" className="hover:text-blue-400 transition">
+            Sell
+          </Link>
+        </nav>
       </motion.header>
 
-      <motion.main
-         className="text-center px-3 py-5 mx-auto"
-         style={{ maxWidth: '600px' }}
-         initial={{ opacity: 0, scale: 0.95 }}
-         animate={{ opacity: 1, scale: 1 }}
-         transition={{ duration: 0.7 }}
-
-
+      {/* === Hero Section === */}
+      <motion.section
+        className="text-center px-4 py-16 bg-gradient-to-r from-blue-50 to-green-50"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.7 }}
       >
-        <h1 className="fw-bold mb-3 text-center text-3xl sm:text-4xl leading-tight px-3">
-  🎉 Welcome to <br className="d-sm-none" /> MyAmravati Market ✨
-</h1>
-        <p className="lead mb-4 w-100" style={{ maxWidth: '100%' }}>
-          A digital bazaar for students, home entrepreneurs, and locals of the Amravati district.
-          Buy and sell books, crafts, handmade food, second-hand items and more.
+        <h1 className="font-bold text-3xl sm:text-5xl mb-4 leading-tight">
+          🎉 Welcome to <br className="sm:hidden" />{" "}
+          <span className="text-blue-600">MyAmravati Market ✨</span>
+        </h1>
+        <p className="text-gray-600 max-w-2xl mx-auto mb-6 text-base sm:text-lg">
+          A digital bazaar for students, home entrepreneurs, and locals of the
+          Amravati district. Buy and sell books, crafts, handmade food,
+          second-hand items, and more.
         </p>
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link
+            to="/browse"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
+          >
+            Browse Products
+          </Link>
+          <Link
+            to="/add-product"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
+          >
+            Add Your Product
+          </Link>
+        </div>
+      </motion.section>
 
-        <motion.div
-          className="d-flex gap-3 flex-wrap justify-content-center mb-5"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <Link to="/browse" className="btn btn-primary btn-lg shadow">Browse Products</Link>
-          <Link to="/add-product" className="btn btn-outline-success btn-lg shadow">Add Your Product</Link>
-        </motion.div>
-      </motion.main>
-<hr className="my-0 border-0" style={{ height: '1px', background: '#eee' }} />
-
-      {/* === How It Works Section === */}
-      <div className="bg-gray-100 py-16 px-4">
-        <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">
+      {/* === How It Works === */}
+      <section className="bg-gray-100 py-16 px-6">
+        <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-12">
           How MyAmravati Market Works
         </h2>
 
@@ -70,12 +81,15 @@ function Home() {
             ref={step1Ref}
             initial={{ opacity: 0, y: 50 }}
             animate={step1InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
-           >
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transform transition duration-300"
+          >
             <div className="text-5xl mb-4">📸</div>
             <h3 className="text-xl font-semibold mb-2">List Your Product</h3>
-            <p className="text-gray-600">Upload a photo, set your price, write details, and share your WhatsApp number.</p>
+            <p className="text-gray-600">
+              Upload a photo, set your price, write details, and share your
+              WhatsApp number.
+            </p>
           </motion.div>
 
           {/* Step 2 */}
@@ -83,12 +97,15 @@ function Home() {
             ref={step2Ref}
             initial={{ opacity: 0, y: 50 }}
             animate={step2InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-           className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transform transition duration-300"
           >
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold mb-2">Browse & Contact</h3>
-            <p className="text-gray-600">Buyers search local listings and chat directly with sellers via WhatsApp.</p>
+            <p className="text-gray-600">
+              Buyers search local listings and chat directly with sellers via
+              WhatsApp.
+            </p>
           </motion.div>
 
           {/* Step 3 */}
@@ -96,64 +113,74 @@ function Home() {
             ref={step3Ref}
             initial={{ opacity: 0, y: 50 }}
             animate={step3InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-           className="bg-white shadow-lg rounded-2xl p-6 text-center transition-transform hover:scale-105 duration-300"
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transform transition duration-300"
           >
             <div className="text-5xl mb-4">🤝</div>
             <h3 className="text-xl font-semibold mb-2">Deal & Deliver</h3>
-            <p className="text-gray-600">Meet nearby, confirm the deal, and exchange items securely and quickly.</p>
+            <p className="text-gray-600">
+              Meet nearby, confirm the deal, and exchange items securely and
+              quickly.
+            </p>
           </motion.div>
         </div>
 
-        {/* Call To Action Button */}
         <div className="text-center mt-12">
-          <a href="/add-product">
+          <Link to="/add-product">
             <motion.button
               whileHover={{ scale: 1.05 }}
-              className="bg-blue-600 hover:bg-blue-700 text-black font-semibold px-6 py-3 rounded-xl shadow-md transition"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
             >
               Start Selling Now
             </motion.button>
-          </a>
+          </Link>
         </div>
-      </div>
+      </section>
 
       {/* === Support Section === */}
-      <motion.div
-        className="bg-white py-10 px-4 border-t border-gray-200"
+      <motion.section
+        className="bg-white py-16 px-6 border-t border-gray-200"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         viewport={{ once: true }}
       >
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center">
           <h3 className="text-2xl font-bold text-gray-800 mb-4">Need Help?</h3>
           <p className="text-gray-600 mb-6">
             Facing issues or have questions? We’re here to help you 24/7.
           </p>
           <a
             href="mailto:myamravatimart007@gmail.com?subject=Support Request – MyAmravati Market"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-black font-semibold px-6 py-3 rounded-xl transition shadow-md"
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
           >
             Email Us: myamravatimart007@gmail.com
           </a>
         </div>
-      </motion.div>
+      </motion.section>
 
-      <footer className="bg-dark text-white text-center py-3">
-        <small>© 2025 MyAmravati Market</small>
-        <p className="mb-0"> MyAmravati Market • Made with ❤️ for Amravati</p>
-        <div className="text-center text-sm mt-10 text-gray-500">
-  <Link to="/terms" className="hover:underline">Terms & Conditions</Link> | 
-  <Link to="/privacy" className="hover:underline ml-2">Privacy Policy</Link>
-</div>
-        <small>Built for Amravati | <a href="#" className="text-info text-decoration-none">Powered by you</a></small>
+      {/* === Footer === */}
+      <footer className="bg-gray-900 text-gray-300 text-center py-6">
+        <p className="mb-2">
+          © 2025 MyAmravati Market • Made with ❤️ for Amravati
+        </p>
+        <div className="space-x-3 text-sm">
+          <Link to="/terms" className="hover:underline">
+            Terms & Conditions
+          </Link>
+          <Link to="/privacy" className="hover:underline">
+            Privacy Policy
+          </Link>
+        </div>
+        <p className="mt-2 text-xs">
+          Built for Amravati |{" "}
+          <a href="#" className="text-blue-400 hover:underline">
+            Powered by you
+          </a>
+        </p>
       </footer>
     </>
   );
-  toast.success("Logged in successfully!");
-toast.error("Invalid credentials!");
-
 }
 
 export default Home;
