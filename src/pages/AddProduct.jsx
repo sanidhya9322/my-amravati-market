@@ -29,7 +29,7 @@ const AddProduct = () => {
 
   const DAILY_LIMIT = 3;
 
-  // ✅ Auto-detect user location (city/village)
+  // ✅ Auto-detect user location
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -65,9 +65,13 @@ const AddProduct = () => {
     }));
   };
 
-  // ✅ Handle image uploads (preview)
+  // ✅ Handle image selection + preview
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+    if (files.length > 6) {
+      toast.error("⚠️ You can upload up to 6 images only.");
+      return;
+    }
     setImages(files);
     setPreviewURLs(files.map((file) => URL.createObjectURL(file)));
   };
@@ -112,7 +116,7 @@ const AddProduct = () => {
         return;
       }
 
-      // ✅ Upload all images to Firebase
+      // ✅ Upload all images
       const imageUrls = [];
       for (const image of images) {
         const imageRef = ref(
@@ -208,11 +212,11 @@ const AddProduct = () => {
               onChange={handleChange}
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option>📚 Books & Notes</option>
-              <option>🧵 Handmade Items</option>
-              <option>🍱 Homemade Food</option>
-              <option>♻️ Second-hand Items</option>
-              <option>🆕 New Items</option>
+              <option value="Books & Notes">📚 Books & Notes</option>
+              <option value="Handmade Items">🧵 Handmade Items</option>
+              <option value="Homemade Food">🍱 Homemade Food</option>
+              <option value="Second-hand Items">♻️ Second-hand Items</option>
+              <option value="New Items">🆕 New Items</option>
             </select>
 
             <input
@@ -222,6 +226,7 @@ const AddProduct = () => {
               onChange={handleChange}
               placeholder="WhatsApp Number"
               required
+              pattern="[0-9]{10}"
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -229,7 +234,7 @@ const AddProduct = () => {
           {/* Image Upload */}
           <div>
             <label className="block text-sm mb-2 font-medium text-gray-700">
-              Upload Product Images
+              Upload Product Images (Max 6)
             </label>
             <input
               type="file"
@@ -243,12 +248,13 @@ const AddProduct = () => {
             {previewURLs.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                 {previewURLs.map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url}
-                    alt={`Preview ${idx}`}
-                    className="rounded-xl w-full h-32 object-cover border shadow"
-                  />
+                  <div key={idx} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Preview ${idx}`}
+                      className="rounded-xl w-full h-32 object-cover border shadow"
+                    />
+                  </div>
                 ))}
               </div>
             )}
