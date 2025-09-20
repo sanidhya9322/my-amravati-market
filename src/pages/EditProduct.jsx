@@ -153,6 +153,7 @@ function EditProduct() {
               <option>Homemade Food</option>
               <option>Second-hand Items</option>
               <option>New Items</option>
+              <option>From shop</option>
           </select>
 
           <label>Change Image (optional):</label>

@@ -217,6 +217,7 @@ const AddProduct = () => {
               <option value="Homemade Food">🍱 Homemade Food</option>
               <option value="Second-hand Items">♻️ Second-hand Items</option>
               <option value="New Items">🆕 New Items</option>
+              <option value="From Shop">🛒 From shop</option>
             </select>
 
             <input
