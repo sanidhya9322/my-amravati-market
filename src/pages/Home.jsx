@@ -2,7 +2,6 @@ import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 
-<meta name="google-site-verification" content="FyErrcxqCQzYTEZ3EYsAv9SchTucA3TjV5arFbhLrgg" />
 function Home() {
   // Refs for scroll animations
   const step1Ref = useRef(null);
