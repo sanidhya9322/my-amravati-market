@@ -67,28 +67,6 @@ function Navbar() {
               menuOpen ? "flex" : "hidden"
             } sm:flex flex-col sm:flex-row sm:items-center sm:gap-3 absolute sm:static top-16 left-0 w-full sm:w-auto bg-white sm:bg-transparent shadow sm:shadow-none p-4 sm:p-0`}
           >
-            {/* ✅ Categories */}
-            <div className="flex flex-col sm:flex-row sm:gap-3 mb-2 sm:mb-0">
-              <Link to="/category/books-notes" className="nav-link">
-                📚 Books & Notes
-              </Link>
-              <Link to="/category/handmade-items" className="nav-link">
-                🎨 Handmade
-              </Link>
-              <Link to="/category/homemade-food" className="nav-link">
-                🍲 Food
-              </Link>
-              <Link to="/category/second-hand" className="nav-link">
-                🔄 Second-hand
-              </Link>
-              <Link to="/category/new-items" className="nav-link">
-                🆕 New
-              </Link>
-              <Link to="/category/shop" className="nav-link">
-                🏪 Shop
-              </Link>
-            </div>
-
             {user ? (
               <>
                 <Link
