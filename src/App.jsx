@@ -18,7 +18,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminDashboard";
-
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 // ✅ Category Pages
 import BooksNotes from "./pages/BooksNotes";
 import HandmadeItems from "./pages/HandmadeItems";
@@ -50,7 +51,8 @@ function App() {
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="*" element={<NotFound />} />
-
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin-page" element={<AdminPage />} />
