@@ -1,19 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Homepage -->
   <url>
     <loc>https://myamravati.com/</loc>
     <priority>1.0</priority>
+    <changefreq>daily</changefreq>
   </url>
+
+  <!-- Products Page -->
   <url>
-    <loc>https://myamravati.com/blog</loc>
+    <loc>https://myamravati.com/products</loc>
     <priority>0.9</priority>
+    <changefreq>daily</changefreq>
   </url>
+
   <url>
-    <loc>https://myamravati.com/blog/homemade-food-amravati</loc>
-    <priority>0.8</priority>
+    <loc>https://myamravati.com/browse</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
   </url>
+
+  <!-- Add Product Page -->
   <url>
-    <loc>https://myamravati.com/blog/sell-second-hand-goods-amravati</loc>
+    <loc>https://myamravati.com/add-product</loc>
     <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
   </url>
+
+  <!-- Login -->
+  <url>
+    <loc>https://myamravati.com/login</loc>
+    <priority>0.3</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Signup -->
+  <url>
+    <loc>https://myamravati.com/signup</loc>
+    <priority>0.5</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://myamravati.com/privacy-policy</loc>
+    <priority>0.2</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Terms & Conditions -->
+  <url>
+    <loc>https://myamravati.com/terms-and-conditions</loc>
+    <priority>0.2</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- About Page (optional, if you add) -->
+  <url>
+    <loc>https://myamravati.com/about</loc>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
 </urlset>
