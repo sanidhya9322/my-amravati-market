@@ -12,6 +12,24 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
+// Data mapping talukas to villages
+const talukaVillages = {
+  Amravati: ["Amravati", "Badnera", "Walgaon", "Shendurjana"],
+  Bhatkuli: ["Bhatkuli", "Kawatha", "Chandur", "Khamgaon"],
+  "Nandgaon-Khandeshwar": ["Nandgaon-Khandeshwar", "Malegaon", "Belora", "Morshi"],
+  "Chandur Bazar": ["Chandur Bazar", "Yevada", "Shirala", "Warud"],
+  Daryapur: ["Daryapur", "Khallar", "Dhamangaon", "Adgaon"],
+  Morshi: ["Morshi", "Warud", "Teosa", "Kurha"],
+  Warud: ["Warud", "Shendurjana", "Nimbhora", "Zilpi"],
+  "Dhamangaon Railway": ["Dhamangaon Railway", "Talegaon", "Jambha", "Shiur"],
+  "Chandur Railway": ["Chandur Railway", "Talegaon", "Nandgaon", "Borgaon"],
+  Anjangaon: ["Anjangaon", "Shendurjana", "Yevada", "Warud"],
+  Achalpur: ["Achalpur", "Paratwada", "Warud", "Daryapur"],
+  Teosa: ["Teosa", "Borgaon", "Malegaon", "Shendurjana"],
+  Dharni: ["Dharni", "Chikhaldara", "Melghat", "Harisal"],
+  Chikhaldara: ["Chikhaldara", "Semadoh", "Dharni", "Harisal"],
+};
+
 const AddProduct = () => {
   const [formData, setFormData] = useState({
     title: "",
@@ -23,74 +41,51 @@ const AddProduct = () => {
     address: "",
     sellerPhone: "",
   });
-  <select
-    name="taluka"
-    value={formData.taluka}
-    onChange={handleChange}
-    required
-    className="w-full px-4 py-3 border rounded-lg"
-  >
-    <option value="">-- Select Taluka --</option>
-    <option value="Amravati">Amravati</option>
-    <option value="Bhatkuli">Bhatkuli</option>
-    <option value="Nandgaon-Khandeshwar">Nandgaon-Khandeshwar</option>
-    <option value="Chandur Bazar">Chandur Bazar</option>
-    <option value="Daryapur">Daryapur</option>
-    <option value="Morshi">Morshi</option>
-    <option value="Warud">Warud</option>
-    <option value="Dhamangaon Railway">Dhamangaon Railway</option>
-    <option value="Chandur Railway">Chandur Railway</option>
-    <option value="Anjangaon">Anjangaon</option>
-    <option value="Achalpur">Achalpur</option>
-    <option value="Teosa">Teosa</option>
-    <option value="Dharni">Dharni</option>
-    <option value="Chikhaldara">Chikhaldara</option>
-  </select>
+
+  // State for the village search input
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [images, setImages] = useState([]);
   const [previewURLs, setPreviewURLs] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const navigate = useNavigate();
-
+   const navigate = useNavigate();
   const DAILY_LIMIT = 3;
 
-  // ✅ Auto-detect user location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-            );
-            const data = await response.json();
-            const place =
-              data.address?.village ||
-              data.address?.city ||
-              data.address?.town ||
-              "";
-            if (place) {
-              setFormData((prev) => ({ ...prev, location: place }));
-            }
-          } catch (error) {
-            console.warn("Location fetch failed:", error);
-          }
-        },
-        () => console.warn("Geolocation permission denied.")
-      );
-    }
-  }, []);
-
-  // ✅ Handle input changes
+  // Handles input changes for all form fields
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
-  // ✅ Handle image selection + preview
+  // Handles changes to the village search input
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setFormData((prev) => ({
+      ...prev,
+      village: "", // Clear village when searching
+    }));
+  };
+
+  // Handles the selection of a village from the filtered list
+  const handleSelectVillage = (village) => {
+    setFormData((prev) => ({
+      ...prev,
+      village: village,
+    }));
+    setSearchTerm(""); // Clear search term after selection
+  };
+
+  // Filters villages based on selected taluka and search term
+  const filteredVillages = formData.taluka
+    ? talukaVillages[formData.taluka].filter(village =>
+        village.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  // Handles image selection + preview
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 6) {
@@ -101,32 +96,27 @@ const AddProduct = () => {
     setPreviewURLs(files.map((file) => URL.createObjectURL(file)));
   };
 
-  // ✅ Submit product
+  // Submit product to Firebase
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.title || !formData.description || !formData.price) {
+    if (!formData.title || !formData.description || !formData.price || !formData.taluka || !formData.village || !formData.address) {
       toast.error("⚠️ Please fill all required fields.");
       return;
-    }
-
+     }
     if (images.length === 0) {
       toast.error("⚠️ Please select at least one image.");
       return;
-    }
-
+     }
     if (!auth.currentUser) {
       toast.error("🚫 You must be logged in to add a product.");
       return;
     }
 
-    setUploading(true);
-
+     setUploading(true);
     try {
-      // ✅ Daily post limit check
+      // Daily post limit check
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
+       today.setHours(0, 0, 0, 0);
       const productsRef = collection(db, "products");
       const q = query(
         productsRef,
@@ -134,14 +124,13 @@ const AddProduct = () => {
         where("createdAt", ">=", today)
       );
       const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.size >= DAILY_LIMIT) {
+       if (querySnapshot.size >= DAILY_LIMIT) {
         toast.error("🚫 Daily post limit reached (3 per day).");
         setUploading(false);
         return;
       }
 
-      // ✅ Upload all images
+      // Upload all images
       const imageUrls = [];
       for (const image of images) {
         const imageRef = ref(
@@ -153,13 +142,14 @@ const AddProduct = () => {
         imageUrls.push(imageUrl);
       }
 
-      // ✅ Save product in Firestore
+      // Save product in Firestore
       await addDoc(productsRef, {
         ...formData,
         price: parseFloat(formData.price),
         district: "Amravati",
         state: "Maharashtra",
         pincode: 444601,
+        imageUrls,
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         createdAt: serverTimestamp(),
@@ -179,14 +169,12 @@ const AddProduct = () => {
 
   return (
     <div className="flex justify-center items-center py-10 px-4 bg-gray-100 min-h-screen">
-      <Toaster position="top-center" reverseOrder={false} />
-
+       <Toaster position="top-center" reverseOrder={false} />
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-800">
           📦 Add New Product
         </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
+         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
           <input
             type="text"
@@ -197,8 +185,7 @@ const AddProduct = () => {
             required
             className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-
-          {/* Description */}
+           {/* Description */}
           <textarea
             name="description"
             value={formData.description}
@@ -208,9 +195,8 @@ const AddProduct = () => {
             rows="4"
             className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
           ></textarea>
-
-          {/* Price + Location */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          {/* Price + Taluka + Village Search */}
+          <div className="flex flex-col sm:flex-row gap-4 relative">
             <input
               type="number"
               name="price"
@@ -220,7 +206,7 @@ const AddProduct = () => {
               required
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {/* Taluka and Village input fields */}
+            {/* Taluka Dropdown */}
             <select
               name="taluka"
               value={formData.taluka}
@@ -229,33 +215,39 @@ const AddProduct = () => {
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Select Taluka --</option>
-              <option value="Amravati">Amravati</option>
-              <option value="Bhatkuli">Bhatkuli</option>
-              <option value="Nandgaon-Khandeshwar">Nandgaon-Khandeshwar</option>
-              <option value="Chandur Bazar">Chandur Bazar</option>
-              <option value="Daryapur">Daryapur</option>
-              <option value="Morshi">Morshi</option>
-              <option value="Warud">Warud</option>
-              <option value="Dhamangaon Railway">Dhamangaon Railway</option>
-              <option value="Chandur Railway">Chandur Railway</option>
-              <option value="Anjangaon">Anjangaon</option>
-              <option value="Achalpur">Achalpur</option>
-              <option value="Teosa">Teosa</option>
-              <option value="Dharni">Dharni</option>
-              <option value="Chikhaldara">Chikhaldara</option>
+              {Object.keys(talukaVillages).map((taluka) => (
+                <option key={taluka} value={taluka}>{taluka}</option>
+              ))}
             </select>
-            <input
-              type="text"
-              name="village"
-              value={formData.village}
-              onChange={handleChange}
-              placeholder="Enter or search your village"
-              required
-              className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            {/* Village Search Input - Renders only if a Taluka is selected */}
+            {formData.taluka && (
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  name="villageSearch"
+                  value={formData.village || searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Search your village"
+                  className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {/* Search Results List */}
+                {searchTerm && filteredVillages.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filteredVillages.map((village, idx) => (
+                      <div
+                        key={idx}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                        onClick={() => handleSelectVillage(village)}
+                      >
+                        {village}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Address */}
+           {/* Address */}
           <input
             type="text"
             name="address"
@@ -265,8 +257,7 @@ const AddProduct = () => {
             required
             className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-
-          {/* Category + Phone */}
+           {/* Category + Phone */}
           <div className="flex flex-col sm:flex-row gap-4">
             <select
               name="category"
@@ -280,8 +271,7 @@ const AddProduct = () => {
               <option value="Second-hand Items">♻️ Second-hand Items</option>
               <option value="New Items">🆕 New Items</option>
               <option value="From Shop">🛒 From shop</option>
-            </select>
-
+             </select>
             <input
               type="tel"
               name="sellerPhone"
@@ -293,8 +283,7 @@ const AddProduct = () => {
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          {/* Image Upload */}
+           {/* Image Upload */}
           <div>
             <label className="block text-sm mb-2 font-medium text-gray-700">
               Upload Product Images (Max 6)
@@ -307,8 +296,7 @@ const AddProduct = () => {
               required
               className="w-full px-4 py-2 border rounded-xl shadow-sm text-sm sm:text-base"
             />
-
-            {previewURLs.length > 0 && (
+             {previewURLs.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                 {previewURLs.map((url, idx) => (
                   <div key={idx} className="relative group">
@@ -321,8 +309,7 @@ const AddProduct = () => {
                 ))}
               </div>
             )}
-          </div>
-
+           </div>
           {/* Submit */}
           <button
             type="submit"
