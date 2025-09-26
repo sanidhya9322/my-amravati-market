@@ -18,9 +18,34 @@ const AddProduct = () => {
     description: "",
     price: "",
     category: "Books & Notes",
-    location: "",
+    taluka: "",
+    village: "",
+    address: "",
     sellerPhone: "",
   });
+  <select
+    name="taluka"
+    value={formData.taluka}
+    onChange={handleChange}
+    required
+    className="w-full px-4 py-3 border rounded-lg"
+  >
+    <option value="">-- Select Taluka --</option>
+    <option value="Amravati">Amravati</option>
+    <option value="Bhatkuli">Bhatkuli</option>
+    <option value="Nandgaon-Khandeshwar">Nandgaon-Khandeshwar</option>
+    <option value="Chandur Bazar">Chandur Bazar</option>
+    <option value="Daryapur">Daryapur</option>
+    <option value="Morshi">Morshi</option>
+    <option value="Warud">Warud</option>
+    <option value="Dhamangaon Railway">Dhamangaon Railway</option>
+    <option value="Chandur Railway">Chandur Railway</option>
+    <option value="Anjangaon">Anjangaon</option>
+    <option value="Achalpur">Achalpur</option>
+    <option value="Teosa">Teosa</option>
+    <option value="Dharni">Dharni</option>
+    <option value="Chikhaldara">Chikhaldara</option>
+  </select>
 
   const [images, setImages] = useState([]);
   const [previewURLs, setPreviewURLs] = useState([]);
@@ -132,7 +157,9 @@ const AddProduct = () => {
       await addDoc(productsRef, {
         ...formData,
         price: parseFloat(formData.price),
-        imageUrls,
+        district: "Amravati",
+        state: "Maharashtra",
+        pincode: 444601,
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         createdAt: serverTimestamp(),
@@ -193,16 +220,51 @@ const AddProduct = () => {
               required
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* Taluka and Village input fields */}
+            <select
+              name="taluka"
+              value={formData.taluka}
+              onChange={handleChange}
+              required
+              className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Select Taluka --</option>
+              <option value="Amravati">Amravati</option>
+              <option value="Bhatkuli">Bhatkuli</option>
+              <option value="Nandgaon-Khandeshwar">Nandgaon-Khandeshwar</option>
+              <option value="Chandur Bazar">Chandur Bazar</option>
+              <option value="Daryapur">Daryapur</option>
+              <option value="Morshi">Morshi</option>
+              <option value="Warud">Warud</option>
+              <option value="Dhamangaon Railway">Dhamangaon Railway</option>
+              <option value="Chandur Railway">Chandur Railway</option>
+              <option value="Anjangaon">Anjangaon</option>
+              <option value="Achalpur">Achalpur</option>
+              <option value="Teosa">Teosa</option>
+              <option value="Dharni">Dharni</option>
+              <option value="Chikhaldara">Chikhaldara</option>
+            </select>
             <input
               type="text"
-              name="location"
-              value={formData.location}
+              name="village"
+              value={formData.village}
               onChange={handleChange}
-              placeholder="Your Village / Local Area"
+              placeholder="Enter or search your village"
               required
               className="flex-1 px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {/* Address */}
+          <input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            placeholder="House No. / Street / Landmark"
+            required
+            className="w-full px-4 py-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
           {/* Category + Phone */}
           <div className="flex flex-col sm:flex-row gap-4">
