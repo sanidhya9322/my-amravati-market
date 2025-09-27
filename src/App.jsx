@@ -1,41 +1,33 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
-
-// ✅ Components
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
-import useLenis from "./hooks/useLenis";
-
-// ✅ Pages
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
-import AddProduct from "./pages/AddProduct";
-import EditProduct from "./pages/EditProduct";
-import Browse from "./pages/Browse";
-import Favorites from "./pages/Favorites";
-import ProductDetails from "./pages/ProductDetails";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import NotFound from "./pages/NotFound";
-import AdminPage from "./pages/AdminPage";
-import AdminDashboard from "./pages/AdminDashboard";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import AddProduct from './pages/AddProduct';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import Browse from './pages/Browse';
+import EditProduct from './pages/EditProduct';
+import NotFound from './pages/NotFound';
+import Favorites from './pages/Favorites';
+import useLenis from './hooks/useLenis';
+import ProductDetails from './pages/ProductDetails';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import { Toaster } from 'react-hot-toast';
+import AdminPage from "./pages/AdminPage.jsx";
+import AdminDashboard from "./pages/AdminDashboard"; // ✅ FIX: Import added
 
 function App() {
   useLenis();
 
   return (
     <Router>
-      {/* ✅ Global Navbar */}
       <Navbar />
-
-      {/* ✅ Toaster for notifications */}
+      {/* ✅ One global Toaster for the entire app */}
       <Toaster position="top-right" reverseOrder={false} />
-
-      {/* ✅ Main Routes */}
+ 
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -45,11 +37,10 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
 
-        {/* ✅ Admin Section */}
+        {/* ✅ FIX: Give each route a unique path */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin-page" element={<AdminPage />} />
 
-        {/* ✅ Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -84,11 +75,9 @@ function App() {
         />
         <Route path="/product/:id" element={<ProductDetails />} />
       </Routes>
-
-      {/* ✅ Global Footer (always visible) */}
-      <Footer />
     </Router>
   );
 }
+
 
 export default App;
