@@ -3,15 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa"; // ✅ social icons
+import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 
 function Navbar() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showSocial, setShowSocial] = useState(true); // control visibility
   const navigate = useNavigate();
 
+  let lastScrollY = window.scrollY;
+
   useEffect(() => {
+    // Auth listener
     const unsubscribe = onAuthStateChanged(auth, async (currUser) => {
       setUser(currUser);
       if (currUser) {
@@ -23,7 +27,25 @@ function Navbar() {
         setRole(null);
       }
     });
-    return () => unsubscribe();
+
+    // Scroll listener
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY && window.scrollY > 100) {
+        // scrolling down
+        setShowSocial(false);
+      } else {
+        // scrolling up
+        setShowSocial(true);
+      }
+      lastScrollY = window.scrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -133,15 +155,23 @@ function Navbar() {
         </div>
       </nav>
 
-      {/* 🔻 Footer-like Social Bar */}
-      <div className="bg-gray-100 py-3 text-center">
-        <p className="text-gray-600 text-sm">Follow us on</p>
-        <div className="flex justify-center gap-5 mt-2">
+      {/* 🔻 Content Padding */}
+      <div className="pb-28">
+        {/* Your page content goes here */}
+      </div>
+
+      {/* 🔻 Floating Sticky Bottom Social Bar */}
+      <div
+        className={`fixed left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md shadow-lg rounded-full py-2 px-6 z-40 transition-all duration-300
+                    sm:bottom-6 sm:px-8 sm:py-3 xs:bottom-2 xs:px-4 xs:py-2
+                    ${showSocial ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0"}`}
+      >
+        <div className="flex justify-center gap-6 xs:gap-4">
           <a
             href="https://facebook.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 text-xl"
+            className="text-blue-600 hover:text-blue-800 text-2xl xs:text-xl"
           >
             <FaFacebook />
           </a>
@@ -149,7 +179,7 @@ function Navbar() {
             href="https://instagram.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-pink-600 hover:text-pink-800 text-xl"
+            className="text-pink-600 hover:text-pink-800 text-2xl xs:text-xl"
           >
             <FaInstagram />
           </a>
@@ -157,7 +187,7 @@ function Navbar() {
             href="https://twitter.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-600 text-xl"
+            className="text-blue-400 hover:text-blue-600 text-2xl xs:text-xl"
           >
             <FaTwitter />
           </a>
@@ -165,7 +195,7 @@ function Navbar() {
             href="https://youtube.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-red-600 hover:text-red-800 text-xl"
+            className="text-red-600 hover:text-red-800 text-2xl xs:text-xl"
           >
             <FaYoutube />
           </a>
