@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { db } from '../firebase/firebaseConfig';
+import { db, auth } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
 import { FaWhatsapp, FaTelegramPlane, FaCopy, FaMapMarkerAlt, FaShareAlt } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
@@ -13,22 +13,17 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [similarLoading, setSimilarLoading] = useState(true);
-  const [shareOpen, setShareOpen] = useState(false);
-
-  // 👇 For image gallery
+  const [similarLoading, setSimilarLoading] = useState(true);  const [shareOpen, setShareOpen] = useState(false);
   const [mainImage, setMainImage] = useState(null);
 
+  // 🔹 Fetch product details
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const productRef = doc(db, 'products', id);
         const productSnap = await getDoc(productRef);
         if (productSnap.exists()) {
-          const data = { id: productSnap.id, ...productSnap.data() };
-          setProduct(data);
-
-          // Set default main image
+          const data = { id: productSnap.id, ...productSnap.data() };          setProduct(data);
           if (data.imageUrls?.length > 0) {
             setMainImage(data.imageUrls[0]);
           } else if (data.imageUrl) {
@@ -49,6 +44,7 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id, navigate]);
 
+  // 🔹 Fetch similar products
   useEffect(() => {
     const fetchSimilar = async () => {
       if (!product?.category) return;
@@ -72,11 +68,33 @@ const ProductDetails = () => {
     if (product) fetchSimilar();
   }, [product, id]);
 
+  // 🔹 Copy product link
   const handleCopyLink = () => {
     const url = `${window.location.origin}/product/${id}`;
     navigator.clipboard.writeText(url);
     toast.success('🔗 Link copied to clipboard!');
     setShareOpen(false);
+  };
+
+  // 🔹 Contact Seller (Login Required)
+  const handleContactSeller = () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      toast.error('⚠️ Please login or signup to contact the seller');
+      navigate('/login');
+      return;
+    }
+
+    const phone = product.contact || product.sellerPhone;
+    if (!phone) {
+      toast.error('❌ Seller contact not available');
+      return;
+    }
+
+    const message = `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`;
+    const whatsappLink = `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappLink, '_blank');
   };
 
   if (loading || !product) {
@@ -90,7 +108,7 @@ const ProductDetails = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Back Button */}
+      {/* 🔙 Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="mb-4 text-blue-600 text-sm hover:underline"
@@ -98,7 +116,7 @@ const ProductDetails = () => {
         ← Back to Browse
       </button>
 
-      {/* Product Card */}
+      {/* 🏷 Product Card */}
       <div className="bg-white rounded-2xl shadow p-5 relative grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 🖼 Image Gallery */}
         <div>
@@ -106,7 +124,7 @@ const ProductDetails = () => {
             <img
               src={mainImage}
               alt={product.title}
-             className="w-full aspect-square object-contain rounded-xl bg-gray-100"
+              className="w-full aspect-square object-contain rounded-xl bg-gray-100"
             />
           )}
 
@@ -128,7 +146,7 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* Product Info */}
+        {/* 🧾 Product Info */}
         <div>
           {/* Share Button */}
           <div className="absolute top-4 right-4">
@@ -185,29 +203,23 @@ const ProductDetails = () => {
             </span>
           </div>
 
-          {/* Contact Seller */}
+          {/* 💬 Contact Seller */}
           {product.contact || product.sellerPhone ? (
-  <div className="fixed bottom-0 left-0 w-full bg-white p-3 border-t md:static md:border-none md:p-0">
-    <a
-      href={`https://wa.me/91${product.contact || product.sellerPhone}?text=${encodeURIComponent(
-        `Hi! I'm interested in your product "${product.title}" on MyAmravati Market.`
-      )}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block"
-    >
-      <button className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-lg shadow md:py-2">
-        💬 Contact Seller via WhatsApp
-      </button>
-    </a>
-  </div>
-) : (
-  <p className="text-red-500 text-sm">No seller contact info available.</p>
-)}
+            <div className="fixed bottom-0 left-0 w-full bg-white p-3 border-t md:static md:border-none md:p-0">
+              <button
+                onClick={handleContactSeller}
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-lg shadow md:py-2"
+              >
+                💬 Contact Seller via WhatsApp
+              </button>
+            </div>
+          ) : (
+            <p className="text-red-500 text-sm">No seller contact info available.</p>
+          )}
         </div>
       </div>
 
-      {/* Similar Products */}
+      {/* 🧭 Similar Products */}
       <div className="mt-12">
         <h3 className="text-lg font-semibold mb-4">🧭 Similar Products</h3>
         {similarLoading ? (
@@ -220,25 +232,25 @@ const ProductDetails = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {similarProducts.map((p) => (
               <motion.div
-  key={p.id}
-  whileHover={{ scale: 1.02 }}
-  className="bg-white rounded-2xl shadow p-3 flex flex-col h-full"
->
-  <Link
-    to={`/product/${p.id}`}
-    className="block bg-white rounded-2xl shadow p-3 hover:shadow-md transition"
-  >
-    <img
-  src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
-  alt={p.title}
-  className="w-full h-32 sm:h-36 object-cover rounded-xl mb-2"
-/>
-   <div className="flex flex-col flex-grow"></div>
-    <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
-    <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
-    <p className="text-xs text-gray-500">📌 {p.location}</p>
-  </Link>
-</motion.div>
+                key={p.id}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-2xl shadow p-3 flex flex-col h-full"
+              >
+                <Link
+                  to={`/product/${p.id}`}
+                  className="block bg-white rounded-2xl shadow p-3 hover:shadow-md transition"
+                >
+                  <img
+                    src={p.imageUrls?.[0] || p.imageUrl || '/placeholder.png'}
+                    alt={p.title}
+                    className="w-full h-32 sm:h-36 object-cover rounded-xl mb-2"
+                  />
+                  <div className="flex flex-col flex-grow"></div>
+                  <h4 className="text-sm font-semibold line-clamp-2">{p.title}</h4>
+                  <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
+                  <p className="text-xs text-gray-500">📌 {p.location}</p>
+                </Link>
+              </motion.div>
             ))}
           </div>
         ) : (
