@@ -1,23 +1,32 @@
 import React, { useState } from "react";
 import { auth } from "../firebase/firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
+  // Google & Facebook Providers
+  const googleProvider = new GoogleAuthProvider();
+  const facebookProvider = new FacebookAuthProvider();
+
+  // -------- Email Login ----------
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("⚠️ Please fill all fields");
       return;
     }
-
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -27,6 +36,34 @@ function Login() {
       console.error(err);
       setError("Invalid credentials. Please try again.");
       toast.error("❌ Invalid email or password");
+    }
+    setLoading(false);
+  };
+
+  // -------- Google Login ----------
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      toast.success("✅ Logged in with Google!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Google login failed");
+    }
+    setLoading(false);
+  };
+
+  // -------- Facebook Login ----------
+  const handleFacebookLogin = async () => {
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, facebookProvider);
+      toast.success("✅ Logged in with Facebook!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Facebook login failed");
     }
     setLoading(false);
   };
@@ -85,8 +122,42 @@ function Login() {
           </button>
         </form>
 
-        {/* Footer Links */}
-        <p className="mt-4 text-sm text-gray-600 text-center">
+        {/* Divider */}
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="mx-3 text-sm text-gray-500">or</span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        {/* Social Logins */}
+        <div className="flex flex-col space-y-3">
+          <button
+            onClick={handleGoogleLogin}
+            className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
+          >
+            <img
+              src="https://www.svgrepo.com/show/355037/google.svg"
+              alt="Google"
+              className="w-5 h-5 mr-2"
+            />
+            Continue with Google
+          </button>
+
+          <button
+            onClick={handleFacebookLogin}
+            className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
+          >
+            <img
+              src="https://www.svgrepo.com/show/303145/facebook-icon-logo.svg"
+              alt="Facebook"
+              className="w-5 h-5 mr-2"
+            />
+            Continue with Facebook
+          </button>
+        </div>
+
+        {/* Footer */}
+        <p className="mt-6 text-sm text-gray-600 text-center">
           Don’t have an account?{" "}
           <Link
             to="/signup"

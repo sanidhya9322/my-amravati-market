@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase/firebaseConfig";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from "firebase/auth";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -12,13 +16,17 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const googleProvider = new GoogleAuthProvider();
+
+  // --------------------------
+  // Email Signup
+  // --------------------------
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // 1️⃣ Create Auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -26,10 +34,10 @@ function Signup() {
       );
       const user = userCredential.user;
 
-      // 2️⃣ Save user data in Firestore
+      // Store user in Firestore
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
-        role: "customer", // default role
+        role: "customer",
         createdAt: serverTimestamp(),
       });
 
@@ -44,15 +52,50 @@ function Signup() {
     }
   };
 
+  // --------------------------
+  // Google Signup/Login
+  // --------------------------
+  const handleGoogleSignup = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // Check if user exists in Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        // If new user, create a record
+        await setDoc(userRef, {
+          email: user.email,
+          name: user.displayName,
+          photoURL: user.photoURL,
+          role: "customer",
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      toast.success("🎉 Signed in with Google!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("❌ Google signup error:", err);
+      setError(err.message);
+      toast.error("Google sign-in failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8">
-        {/* Title */}
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6">
           Create an Account 🚀
         </h2>
 
-        {/* Error Alert */}
         {error && (
           <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
             {error}
@@ -98,7 +141,30 @@ function Signup() {
           </button>
         </form>
 
-        {/* Footer Links */}
+        {/* OR Divider */}
+        <div className="flex items-center my-4">
+          <div className="flex-grow h-px bg-gray-200"></div>
+          <span className="text-gray-500 text-sm mx-3">OR</span>
+          <div className="flex-grow h-px bg-gray-200"></div>
+        </div>
+
+        {/* Google Signup Button */}
+        <button
+          onClick={handleGoogleSignup}
+          disabled={loading}
+          className="w-full border border-gray-300 flex items-center justify-center gap-2 py-2.5 rounded-lg hover:bg-gray-50 transition disabled:opacity-60"
+        >
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
+            className="w-5 h-5"
+          />
+          <span className="text-gray-700 font-medium text-sm">
+            Continue with Google
+          </span>
+        </button>
+
+        {/* Footer */}
         <p className="mt-4 text-sm text-gray-600 text-center">
           Already have an account?{" "}
           <Link
