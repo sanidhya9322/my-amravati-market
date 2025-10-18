@@ -18,8 +18,13 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import { Toaster } from 'react-hot-toast';
 import AdminPage from "./pages/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminDashboard"; // ✅ FIX: Import added
+import ReactGA from "react-ga4";
+ReactGA.initialize("G-4PWTPFE8LR");
+import usePageTracking from "./usePageTracking";
+
 
 function App() {
+  usePageTracking(); // activates the tracking hook
   useLenis();
 
   return (
