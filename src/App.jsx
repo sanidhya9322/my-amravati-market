@@ -1,4 +1,5 @@
 import React from 'react';
+import usePageTracking from "./usePageTracking";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -20,7 +21,7 @@ import AdminPage from "./pages/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminDashboard"; // ✅ FIX: Import added
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-4PWTPFE8LR");
-import usePageTracking from "./pages/usePageTracking";
+
 
 
 function App() {
