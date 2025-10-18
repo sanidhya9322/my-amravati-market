@@ -20,7 +20,7 @@ import AdminPage from "./pages/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminDashboard"; // ✅ FIX: Import added
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-4PWTPFE8LR");
-import usePageTracking from "./usePageTracking";
+import usePageTracking from "./pages/usePageTracking";
 
 
 function App() {
