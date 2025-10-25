@@ -7,17 +7,27 @@ import {
   getDocs,
   updateDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 function AdminDashboard() {
   const [user] = useAuthState(auth);
   const [requests, setRequests] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 👉 Change this to YOUR email
-  const ADMIN_EMAIL = "sanipethe22@gmail.com";
+  // ✅ Check if user is admin from Firestore roles collection
+  const checkAdminRole = async (uid) => {
+    try {
+      const roleRef = doc(db, "roles", uid);
+      const roleSnap = await getDoc(roleRef);
+      setIsAdmin(roleSnap.exists() && roleSnap.data().admin === true);
+    } catch (err) {
+      console.error("Error checking admin role:", err);
+    }
+  };
 
-  // Step 1: Fetch all products with featuredRequest = true
+  // ✅ Fetch pending featured requests
   const fetchRequests = async () => {
     try {
       const q = query(
@@ -33,12 +43,18 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (user?.email === ADMIN_EMAIL) {
-      fetchRequests();
+    if (user) {
+      checkAdminRole(user.uid);
     }
   }, [user]);
 
-  // Step 2: Approve request
+  useEffect(() => {
+    if (isAdmin) {
+      fetchRequests();
+    }
+  }, [isAdmin]);
+
+  // ✅ Approve
   const approveFeatured = async (productId) => {
     try {
       const productRef = doc(db, "products", productId);
@@ -50,46 +66,38 @@ function AdminDashboard() {
       fetchRequests();
     } catch (err) {
       console.error("Error approving:", err);
-      alert("❌ Failed to approve.");
     }
   };
 
-  // Step 3: Reject request
+  // ✅ Reject
   const rejectFeatured = async (productId) => {
     try {
       const productRef = doc(db, "products", productId);
       await updateDoc(productRef, {
         featuredRequest: false,
       });
-      alert("❌ Request rejected.");
+      alert("❌ Request Rejected!");
       fetchRequests();
     } catch (err) {
       console.error("Error rejecting:", err);
-      alert("❌ Failed to reject.");
     }
   };
 
-  // 🚫 Restrict access
-  if (!user) {
-    return <p>🔒 Please log in as Admin.</p>;
-  }
-
-  if (user.email !== ADMIN_EMAIL) {
-    return <p>🚫 Access denied. Admins only.</p>;
-  }
+  // ✅ UI Conditions
+  if (!user) return <p>🔒 Please Log In</p>;
+  if (!isAdmin) return <p>🚫 Access Denied — Admin Only</p>;
 
   return (
     <div className="container my-4">
       <h2>⚙️ Admin Dashboard</h2>
-      <p>👤 Logged in as: {user?.email}</p>
 
       {requests.length === 0 ? (
-        <p>No featured requests at the moment.</p>
+        <p>No pending featured requests 😊</p>
       ) : (
         <div className="row">
           {requests.map((product) => (
             <div className="col-md-4 mb-4" key={product.id}>
-              <div className="card h-100">
+              <div className="card h-100 shadow-sm">
                 <img
                   src={product.imageURL}
                   className="card-img-top"
@@ -98,7 +106,9 @@ function AdminDashboard() {
                 <div className="card-body">
                   <h5 className="card-title">{product.productName}</h5>
                   <p className="card-text">₹{product.price}</p>
-                  <p className="card-text">{product.description}</p>
+                  <p className="card-text" style={{ fontSize: "14px" }}>
+                    {product.description}
+                  </p>
                   <div className="d-flex gap-2">
                     <button
                       className="btn btn-success"
