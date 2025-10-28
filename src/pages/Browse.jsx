@@ -136,7 +136,7 @@ const Browse = () => {
               <option value="">All</option>
               {[
                 "Books & Notes", "Handmade Items", "Homemade Food",
-                "Second-hand Items", "New Items", "From shop"
+                "Second-hand Items", "New Items", "From Shop"
               ].map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
