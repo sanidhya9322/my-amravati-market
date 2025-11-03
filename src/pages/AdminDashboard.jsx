@@ -1,136 +1,99 @@
-import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase/firebaseConfig";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  doc,
-  getDoc,
-} from "firebase/firestore";
-import { useAuthState } from "react-firebase-hooks/auth";
+import React, { useState, useEffect } from "react";
+import AdminSidebar from "../components/AdminSidebar";
+import AdminProducts from "./AdminProducts";
+import AdminUsers from "./AdminUsers";
+import AdminOrders from "./AdminOrders";
+import { db } from "../firebase/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+import { Package, User, ShoppingCart } from "lucide-react";
 
-function AdminDashboard() {
-  const [user] = useAuthState(auth);
-  const [requests, setRequests] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
+const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState("products");
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalUsers: 0,
+    totalOrders: 0,
+  });
 
-  // ✅ Check if user is admin from Firestore roles collection
-  const checkAdminRole = async (uid) => {
-    try {
-      const roleRef = doc(db, "roles", uid);
-      const roleSnap = await getDoc(roleRef);
-      setIsAdmin(roleSnap.exists() && roleSnap.data().admin === true);
-    } catch (err) {
-      console.error("Error checking admin role:", err);
-    }
-  };
-
-  // ✅ Fetch pending featured requests
-  const fetchRequests = async () => {
-    try {
-      const q = query(
-        collection(db, "products"),
-        where("featuredRequest", "==", true)
-      );
-      const snapshot = await getDocs(q);
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setRequests(list);
-    } catch (err) {
-      console.error("Error fetching requests:", err);
-    }
-  };
-
+  // Fetch dashboard statistics
   useEffect(() => {
-    if (user) {
-      checkAdminRole(user.uid);
-    }
-  }, [user]);
+    const fetchStats = async () => {
+      const [productsSnap, usersSnap, ordersSnap] = await Promise.all([
+        getDocs(collection(db, "products")),
+        getDocs(collection(db, "users")),
+        getDocs(collection(db, "orders")),
+      ]);
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchRequests();
-    }
-  }, [isAdmin]);
-
-  // ✅ Approve
-  const approveFeatured = async (productId) => {
-    try {
-      const productRef = doc(db, "products", productId);
-      await updateDoc(productRef, {
-        featured: true,
-        featuredRequest: false,
+      setStats({
+        totalProducts: productsSnap.size,
+        totalUsers: usersSnap.size,
+        totalOrders: ordersSnap.size,
       });
-      alert("✅ Approved & marked as Featured!");
-      fetchRequests();
-    } catch (err) {
-      console.error("Error approving:", err);
+    };
+
+    fetchStats();
+  }, []);
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case "products":
+        return <AdminProducts />;
+      case "users":
+        return <AdminUsers />;
+      case "orders":
+        return <AdminOrders />;
+      default:
+        return <AdminProducts />;
     }
   };
-
-  // ✅ Reject
-  const rejectFeatured = async (productId) => {
-    try {
-      const productRef = doc(db, "products", productId);
-      await updateDoc(productRef, {
-        featuredRequest: false,
-      });
-      alert("❌ Request Rejected!");
-      fetchRequests();
-    } catch (err) {
-      console.error("Error rejecting:", err);
-    }
-  };
-
-  // ✅ UI Conditions
-  if (!user) return <p>🔒 Please Log In</p>;
-  if (!isAdmin) return <p>🚫 Access Denied — Admin Only</p>;
 
   return (
-    <div className="container my-4">
-      <h2>⚙️ Admin Dashboard</h2>
+    <div className="flex h-screen bg-gray-50">
+      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {requests.length === 0 ? (
-        <p>No pending featured requests 😊</p>
-      ) : (
-        <div className="row">
-          {requests.map((product) => (
-            <div className="col-md-4 mb-4" key={product.id}>
-              <div className="card h-100 shadow-sm">
-                <img
-                  src={product.imageURL}
-                  className="card-img-top"
-                  alt={product.productName}
-                />
-                <div className="card-body">
-                  <h5 className="card-title">{product.productName}</h5>
-                  <p className="card-text">₹{product.price}</p>
-                  <p className="card-text" style={{ fontSize: "14px" }}>
-                    {product.description}
-                  </p>
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-success"
-                      onClick={() => approveFeatured(product.id)}
-                    >
-                      ✅ Approve
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => rejectFeatured(product.id)}
-                    >
-                      ❌ Reject
-                    </button>
-                  </div>
-                </div>
+      <div className="flex-1 p-6 overflow-y-auto">
+        {/* Analytics Overview */}
+        <h1 className="text-3xl font-bold mb-6 text-indigo-700">
+          🧠 MyAmravati Market Admin Dashboard
+        </h1>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+            <div className="flex items-center">
+              <Package className="text-indigo-600 mr-3" size={26} />
+              <div>
+                <p className="text-sm text-gray-500">Total Products</p>
+                <h2 className="text-2xl font-semibold">{stats.totalProducts}</h2>
               </div>
             </div>
-          ))}
+          </div>
+
+          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+            <div className="flex items-center">
+              <User className="text-green-600 mr-3" size={26} />
+              <div>
+                <p className="text-sm text-gray-500">Total Users</p>
+                <h2 className="text-2xl font-semibold">{stats.totalUsers}</h2>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+            <div className="flex items-center">
+              <ShoppingCart className="text-pink-600 mr-3" size={26} />
+              <div>
+                <p className="text-sm text-gray-500">Total Orders</p>
+                <h2 className="text-2xl font-semibold">{stats.totalOrders}</h2>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Main Tab Area */}
+        {renderTab()}
+      </div>
     </div>
   );
-}
+};
 
 export default AdminDashboard;

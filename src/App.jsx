@@ -17,6 +17,7 @@ import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { Toaster } from 'react-hot-toast';
 import AdminPage from "./pages/AdminPage.jsx";
+import AdminRoute from "./routes/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReactGA from "react-ga4";
 import usePageTracking from "./usePageTracking";
@@ -83,6 +84,13 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/admin"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+} />
 
         <Route path="/product/:id" element={<ProductDetails />} />
       </Routes>

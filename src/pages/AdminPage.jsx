@@ -1,5 +1,6 @@
+// src/pages/AdminPage.jsx
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../firebase/firebaseConfig";
+import { auth, db, storage } from "../firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
@@ -10,533 +11,458 @@ import {
   deleteDoc,
   addDoc,
   serverTimestamp,
+  query,
+  where,
 } from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
+import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
-function AdminPage() {
+/**
+ * AdminPage - Full marketplace management
+ * Tabs: Products | Plans | Users | Analytics
+ */
+
+export default function AdminPage() {
+  const [loadingAuth, setLoadingAuth] = useState(true);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // Data
+  // data
   const [products, setProducts] = useState([]);
   const [plans, setPlans] = useState([]);
   const [users, setUsers] = useState([]);
 
-  // Filters
-  const [filterLocation, setFilterLocation] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortOrder, setSortOrder] = useState("newest");
-
-  // UI
   const [activeTab, setActiveTab] = useState("products");
-  const [newPlan, setNewPlan] = useState({ name: "", price: "", days: "" });
-  const [editingPlan, setEditingPlan] = useState(null);
 
-  // --- Users Tab States ---
-  const [userSearch, setUserSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 5;
+  // filters
+  const [search, setSearch] = useState("");
 
-  // ✅ Auth check
+  // form state for plans
+  const [planForm, setPlanForm] = useState({ id: null, name: "", price: "", days: "" });
+  const [savingPlan, setSavingPlan] = useState(false);
+
+  // auth & role check
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currUser) => {
-      if (currUser) {
-        setUser(currUser);
-        const userDoc = await getDoc(doc(db, "users", currUser.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().role || "user");
-        }
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (!u) {
+        setUser(null);
+        setRole(null);
+        setLoadingAuth(false);
+        return;
       }
-      setLoading(false);
+      setUser(u);
+      // load role
+      try {
+        const userDoc = await getDoc(doc(db, "users", u.uid));
+        const r = userDoc.exists() ? userDoc.data().role || "user" : "user";
+        setRole(r);
+      } catch (err) {
+        console.error("Failed to fetch user role", err);
+        setRole("user");
+      } finally {
+        setLoadingAuth(false);
+      }
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // ✅ Fetch products
-  const fetchProducts = async () => {
-    const snapshot = await getDocs(collection(db, "products"));
-    setProducts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  };
-
-  // ✅ Fetch promotion plans
-  const fetchPlans = async () => {
-    const snapshot = await getDocs(collection(db, "promotionPlans"));
-    setPlans(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  };
-
-  // ✅ Fetch users
-  const fetchUsers = async () => {
-    const snapshot = await getDocs(collection(db, "users"));
-    setUsers(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  };
-
+  // fetch data (only if admin)
   useEffect(() => {
-    if (role === "admin") {
-      fetchProducts();
-      fetchPlans();
-      fetchUsers();
-    }
+    if (role !== "admin") return;
+    fetchAllProducts();
+    fetchPlans();
+    fetchUsers();
   }, [role]);
 
-  // ✅ Promote with plan
-  const promoteProduct = async (productId, days) => {
+  // === Fetchers ===
+  async function fetchAllProducts() {
     try {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + days);
-
-      await updateDoc(doc(db, "products", productId), {
-        promoted: true,
-        promotedAt: serverTimestamp(),
-        promotedUntil: expiresAt,
-      });
-
-      alert(`🚀 Product promoted for ${days} days!`);
-      fetchProducts();
+      const snap = await getDocs(collection(db, "products"));
+      setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
-      console.error("Error promoting product:", err);
+      console.error(err);
+      toast.error("Failed to load products");
     }
-  };
+  }
 
-  // ✅ Remove promotion
-  const removePromotion = async (productId) => {
+  async function fetchPlans() {
     try {
-      await updateDoc(doc(db, "products", productId), {
-        promoted: false,
-        promotedUntil: null,
-      });
-
-      alert("Promotion removed.");
-      fetchProducts();
+      const snap = await getDocs(collection(db, "promotionPlans"));
+      setPlans(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
-      console.error("Error removing promotion:", err);
+      console.error(err);
+      toast.error("Failed to load plans");
     }
-  };
+  }
 
-  // ✅ Delete product
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      await deleteDoc(doc(db, "products", id));
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+  async function fetchUsers() {
+    try {
+      const snap = await getDocs(collection(db, "users"));
+      setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load users");
     }
-  };
+  }
 
-  // ✅ Add/Update Plan
-  const handleSavePlan = async () => {
-    if (!newPlan.name || !newPlan.price || !newPlan.days) {
-      alert("Fill all fields!");
+  // === Product actions ===
+  async function approveProduct(productId) {
+    if (!confirm("Approve this product for public visibility?")) return;
+    try {
+      await updateDoc(doc(db, "products", productId), { approved: true });
+      toast.success("Product approved");
+      fetchAllProducts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to approve");
+    }
+  }
+
+  async function rejectProduct(productId) {
+    if (!confirm("Reject (unpublish) this product?")) return;
+    try {
+      await updateDoc(doc(db, "products", productId), { approved: false });
+      toast.success("Product unpublished");
+      fetchAllProducts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to unpublish");
+    }
+  }
+
+  async function togglePromotion(product) {
+    try {
+      if (product.promoted) {
+        await updateDoc(doc(db, "products", product.id), {
+          promoted: false,
+          promotedAt: null,
+          promotedUntil: null,
+          promotionPlan: null,
+        });
+        toast.success("Promotion removed");
+      } else {
+        // simple: set promoted for 7 days (admin quick boost)
+        const expires = new Date(); expires.setDate(expires.getDate() + 7);
+        await updateDoc(doc(db, "products", product.id), {
+          promoted: true,
+          promotedAt: serverTimestamp(),
+          promotedUntil: expires,
+          promotionPlan: "admin-boost-7d",
+        });
+        toast.success("Promotion enabled (7 days)");
+      }
+      fetchAllProducts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update promotion");
+    }
+  }
+
+  async function deleteProduct(product) {
+    if (!confirm("Delete this product permanently?")) return;
+    try {
+      // delete images in storage if present (best-effort)
+      if (product.imageUrls?.length) {
+        for (const url of product.imageUrls) {
+          try {
+            // get storage path from url — only works if you stored path earlier; if using full URL, we attempt to delete by ref
+            // If you stored storage path separately, use that instead.
+            // This is best-effort: if fails, continue
+            const pathParts = url.split("/o/");
+            if (pathParts.length > 1) {
+              // path encoded after /o/
+              const after = decodeURIComponent(pathParts[1].split("?")[0]);
+              await deleteObject(ref(storage, after));
+            }
+          } catch (err) {
+            console.warn("Failed delete image", err);
+          }
+        }
+      }
+
+      await deleteDoc(doc(db, "products", product.id));
+      toast.success("Product deleted");
+      setProducts(prev => prev.filter(p => p.id !== product.id));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete product");
+    }
+  }
+
+  // === Plans: add/update/delete ===
+  function editPlan(plan) {
+    setPlanForm({ id: plan.id, name: plan.name, price: plan.price, days: plan.days });
+    setActiveTab("plans");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function resetPlanForm() {
+    setPlanForm({ id: null, name: "", price: "", days: "" });
+  }
+
+  async function savePlan(e) {
+    e.preventDefault();
+    if (!planForm.name || !planForm.price || !planForm.days) {
+      toast.error("Fill plan details");
       return;
     }
-
-    if (editingPlan) {
-      await updateDoc(doc(db, "promotionPlans", editingPlan.id), {
-        name: newPlan.name,
-        price: Number(newPlan.price),
-        days: Number(newPlan.days),
-      });
-      alert("✅ Plan updated!");
-      setEditingPlan(null);
-    } else {
-      await addDoc(collection(db, "promotionPlans"), {
-        name: newPlan.name,
-        price: Number(newPlan.price),
-        days: Number(newPlan.days),
-      });
-      alert("✅ Plan added!");
-    }
-
-    setNewPlan({ name: "", price: "", days: "" });
-    fetchPlans();
-  };
-
-  // ✅ Delete Plan
-  const handleDeletePlan = async (id) => {
-    if (window.confirm("Delete this plan?")) {
-      await deleteDoc(doc(db, "promotionPlans", id));
-      fetchPlans();
-    }
-  };
-
-  // ✅ Update user role
-  const updateUserRole = async (id, newRole) => {
-    await updateDoc(doc(db, "users", id), { role: newRole });
-    alert("✅ Role updated!");
-    fetchUsers();
-  };
-
-  // ✅ Filtering + Sorting (Products)
-  const filteredProducts = products
-    .filter((product) => {
-      const locationMatch = filterLocation ? product.location === filterLocation : true;
-      const categoryMatch = filterCategory ? product.category === filterCategory : true;
-      const matchesTitle = product.title?.toLowerCase().includes(searchTerm.toLowerCase());
-      return locationMatch && categoryMatch && matchesTitle;
-    })
-    .sort((a, b) => {
-      if (a.promoted && !b.promoted) return -1;
-      if (!a.promoted && b.promoted) return 1;
-      if (a.promoted && b.promoted) {
-        return (b.promotedAt?.seconds || 0) - (a.promotedAt?.seconds || 0);
+    setSavingPlan(true);
+    try {
+      if (planForm.id) {
+        await updateDoc(doc(db, "promotionPlans", planForm.id), {
+          name: planForm.name,
+          price: Number(planForm.price),
+          days: Number(planForm.days),
+        });
+        toast.success("Plan updated");
+      } else {
+        await addDoc(collection(db, "promotionPlans"), {
+          name: planForm.name,
+          price: Number(planForm.price),
+          days: Number(planForm.days),
+          createdAt: serverTimestamp(),
+        });
+        toast.success("Plan created");
       }
-      if (sortOrder === "priceLowHigh") return a.price - b.price;
-      if (sortOrder === "priceHighLow") return b.price - a.price;
-      if (sortOrder === "newest") return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
-      return 0;
-    });
+      resetPlanForm();
+      fetchPlans();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save plan");
+    } finally {
+      setSavingPlan(false);
+    }
+  }
 
-  // ✅ Filtering + Pagination (Users)
-  const filteredUsers = users.filter((u) =>
-    u.email.toLowerCase().includes(userSearch.toLowerCase())
-  );
+  async function removePlan(planId) {
+    if (!confirm("Delete this plan?")) return;
+    try {
+      await deleteDoc(doc(db, "promotionPlans", planId));
+      toast.success("Plan deleted");
+      fetchPlans();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete plan");
+    }
+  }
 
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * usersPerPage,
-    currentPage * usersPerPage
-  );
+  // === Users management ===
+  async function updateUserRole(userId, newRole) {
+    if (!confirm(`Make this user ${newRole}?`)) return;
+    try {
+      await updateDoc(doc(db, "users", userId), { role: newRole });
+      toast.success("Role updated");
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update role");
+    }
+  }
 
-  if (loading) return <p>⏳ Checking access...</p>;
-  if (!user) return <p>🚫 Please login to access Admin page.</p>;
-  if (role !== "admin") return <p>🚫 Access denied. Admins only.</p>;
+  async function deleteUser(userId) {
+    if (!confirm("Delete user doc? This will not delete auth user. Proceed?")) return;
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      toast.success("User doc deleted");
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete user");
+    }
+  }
+
+  // === Analytics quick counts ===
+  const analytics = {
+    totalProducts: products.length,
+    promoted: products.filter(p => p.promoted).length,
+    pendingApproval: products.filter(p => p.approved === false || p.approved === undefined).length,
+    totalPlans: plans.length,
+    totalUsers: users.length
+  };
+
+  // === Render ===
+  if (loadingAuth) return <p className="p-4">⏳ Checking admin access...</p>;
+  if (!user) return <p className="p-4">🚫 Please login to access Admin page.</p>;
+  if (role !== "admin") return <p className="p-4">🚫 Access denied. Admins only.</p>;
 
   return (
-    <motion.div
-      className="p-6 bg-gray-50 min-h-screen"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      <h1 className="text-2xl font-bold mb-6 text-center">⚡ Admin Dashboard</h1>
-      <p className="text-center mb-6">Welcome {user.email}, you have admin access!</p>
+    <motion.div className="p-6 max-w-6xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">⚡ Admin Dashboard</h1>
+          <p className="text-sm text-gray-600">Welcome {user.email} — Full Marketplace Management</p>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex justify-center mb-6 gap-4">
-        {["products", "plans", "users"].map((tab) => (
+        <div className="flex gap-2">
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === tab ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            {tab === "products" ? "📦 Products" : tab === "plans" ? "💳 Plans" : "👥 Users"}
-          </button>
-        ))}
+            className={`px-3 py-1 rounded ${activeTab === "products" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
+            onClick={() => setActiveTab("products")}
+          >Products</button>
+          <button
+            className={`px-3 py-1 rounded ${activeTab === "plans" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
+            onClick={() => setActiveTab("plans")}
+          >Plans</button>
+          <button
+            className={`px-3 py-1 rounded ${activeTab === "users" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
+            onClick={() => setActiveTab("users")}
+          >Users</button>
+          <button
+            className={`px-3 py-1 rounded ${activeTab === "analytics" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
+            onClick={() => setActiveTab("analytics")}
+          >Analytics</button>
+        </div>
       </div>
 
-      {/* Products Tab */}
+      {/* ========== Products Tab ========== */}
       {activeTab === "products" && (
-        <>
-          {/* Filters */}
-          <div className="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="space-y-4">
+          <div className="flex gap-3">
             <input
-              type="text"
-              placeholder="🔍 Search by title..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-full"
+              placeholder="Search title / location / userEmail..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 px-3 py-2 border rounded"
             />
-            <select
-              value={filterLocation}
-              onChange={(e) => setFilterLocation(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-full"
-            >
-              <option value="">All Locations</option>
-              {[
-                "Amravati",
-                "Achalpur",
-                "Anjangaon Surji",
-                "Bhatkuli",
-                "Chandur Bazar",
-                "Chandur Railway",
-                "Chikhaldara",
-                "Warud",
-                "Dhamangaon Railway",
-                "Dharni",
-                "Daryapur",
-                "Morshi",
-                "Nandgaon Khandeshwar",
-                "Teosa",
-                "Anjangaon",
-              ].map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-full"
-            >
-              <option value="">All Categories</option>
-              {[
-                "Books & Notes",
-                "Handmade Items",
-                "Homemade Food",
-                "Second-hand Items",
-                "New Items",
-              ].map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-full"
-            >
-              <option value="newest">Newest First</option>
-              <option value="priceLowHigh">Price: Low to High</option>
-              <option value="priceHighLow">Price: High to Low</option>
-            </select>
+            <button onClick={() => fetchAllProducts()} className="px-3 py-2 bg-gray-200 rounded">Refresh</button>
           </div>
 
-          {/* Products Table */}
-          <div className="overflow-x-auto bg-white rounded-2xl shadow p-4">
+          <div className="overflow-x-auto bg-white rounded shadow p-3">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-2 text-left">Title</th>
+                <tr className="text-left">
+                  <th className="p-2">Title</th>
+                  <th className="p-2">Seller</th>
                   <th className="p-2">Price</th>
                   <th className="p-2">Category</th>
-                  <th className="p-2">Location</th>
-                  <th className="p-2">Seller</th>
-                  <th className="p-2">Promotion</th>
+                  <th className="p-2">Promoted</th>
+                  <th className="p-2">Approved</th>
                   <th className="p-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-4 text-gray-500">
-                      No products found
+                {products.filter(p => {
+                  if (!search) return true;
+                  const s = search.toLowerCase();
+                  return (p.title||"").toLowerCase().includes(s) ||
+                         (p.location||"").toLowerCase().includes(s) ||
+                         (p.userEmail||"").toLowerCase().includes(s);
+                }).map(p => (
+                  <tr key={p.id} className="border-t">
+                    <td className="p-2 max-w-xs">
+                      <div className="font-semibold">{p.title}</div>
+                      <div className="text-xs text-gray-500 truncate">{p.description}</div>
+                      <Link to={`/product/${p.id}`} className="text-xs text-blue-600">View</Link>
+                    </td>
+                    <td className="p-2">{p.userEmail || "N/A"}</td>
+                    <td className="p-2">₹{p.price}</td>
+                    <td className="p-2">{p.category}</td>
+                    <td className="p-2">{p.promoted ? "Yes" : "No"}</td>
+                    <td className="p-2">{p.approved ? "Approved" : "Pending/Unapproved"}</td>
+                    <td className="p-2 flex gap-2 flex-wrap">
+                      {!p.approved && <button onClick={() => approveProduct(p.id)} className="px-2 py-1 bg-green-600 text-white rounded text-xs">Approve</button>}
+                      {p.approved && <button onClick={() => rejectProduct(p.id)} className="px-2 py-1 bg-yellow-400 text-black rounded text-xs">Unpublish</button>}
+                      <button onClick={() => togglePromotion(p)} className="px-2 py-1 bg-blue-600 text-white rounded text-xs">{p.promoted ? "Remove Promo" : "Boost (7d)"}</button>
+                      <Link to={`/edit/${p.id}`} className="px-2 py-1 bg-gray-200 rounded text-xs">Edit</Link>
+                      <button onClick={() => deleteProduct(p)} className="px-2 py-1 bg-red-600 text-white rounded text-xs">Delete</button>
                     </td>
                   </tr>
-                ) : (
-                  filteredProducts.map((product, i) => (
-                    <motion.tr
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="border-b"
-                    >
-                      <td className="p-2">{product.title}</td>
-                      <td className="p-2">₹{product.price}</td>
-                      <td className="p-2">{product.category}</td>
-                      <td className="p-2">{product.location}</td>
-                      <td className="p-2">{product.sellerPhone || "N/A"}</td>
-                      <td className="p-2">
-                        {product.promoted ? (
-                          <span className="bg-green-100 text-green-600 px-2 py-1 rounded text-xs">
-                            Active until{" "}
-                            {product.promotedUntil
-                              ? new Date(product.promotedUntil.seconds * 1000).toLocaleDateString()
-                              : "N/A"}
-                          </span>
-                        ) : (
-                          <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs">
-                            Not Promoted
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-2 flex flex-col gap-2">
-                        {product.promoted ? (
-                          <button
-                            className="px-3 py-1 bg-yellow-500 text-white rounded text-xs"
-                            onClick={() => removePromotion(product.id)}
-                          >
-                            Remove Promotion
-                          </button>
-                        ) : (
-                          plans.map((plan) => (
-                            <button
-                              key={plan.id}
-                              className="px-3 py-1 bg-blue-500 text-white rounded text-xs"
-                              onClick={() => promoteProduct(product.id, plan.days)}
-                            >
-                              Promote ({plan.name} – ₹{plan.price})
-                            </button>
-                          ))
-                        )}
-                        <button
-                          className="px-3 py-1 bg-red-500 text-white rounded text-xs"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))
+                ))}
+                {products.length === 0 && (
+                  <tr><td colSpan="7" className="p-4 text-center text-gray-500">No products found</td></tr>
                 )}
               </tbody>
             </table>
           </div>
-        </>
-      )}
-
-      {/* Plans Tab */}
-      {activeTab === "plans" && (
-        <div className="bg-white rounded-2xl shadow p-4">
-          <h2 className="text-lg font-semibold mb-4">💳 Manage Promotion Plans</h2>
-
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              placeholder="Plan Name"
-              value={newPlan.name}
-              onChange={(e) => setNewPlan({ ...newPlan, name: e.target.value })}
-              className="border px-3 py-2 rounded text-sm w-1/3"
-            />
-            <input
-              type="number"
-              placeholder="Price"
-              value={newPlan.price}
-              onChange={(e) => setNewPlan({ ...newPlan, price: e.target.value })}
-              className="border px-3 py-2 rounded text-sm w-1/3"
-            />
-            <input
-              type="number"
-              placeholder="Days"
-              value={newPlan.days}
-              onChange={(e) => setNewPlan({ ...newPlan, days: e.target.value })}
-              className="border px-3 py-2 rounded text-sm w-1/3"
-            />
-            <button
-              onClick={handleSavePlan}
-              className="px-4 py-2 bg-green-500 text-white rounded"
-            >
-              {editingPlan ? "Update" : "Add"}
-            </button>
-          </div>
-
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2">Name</th>
-                <th className="p-2">Price</th>
-                <th className="p-2">Days</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {plans.map((plan) => (
-                <tr key={plan.id} className="border-b">
-                  <td className="p-2">{plan.name}</td>
-                  <td className="p-2">₹{plan.price}</td>
-                  <td className="p-2">{plan.days}</td>
-                  <td className="p-2 flex gap-2">
-                    <button
-                      className="px-3 py-1 bg-yellow-500 text-white rounded text-xs"
-                      onClick={() => {
-                        setEditingPlan(plan);
-                        setNewPlan({
-                          name: plan.name,
-                          price: plan.price,
-                          days: plan.days,
-                        });
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-red-500 text-white rounded text-xs"
-                      onClick={() => handleDeletePlan(plan.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       )}
 
-      {/* Users Tab */}
-      {activeTab === "users" && (
-        <div className="bg-white rounded-2xl shadow p-4">
-          <h2 className="text-lg font-semibold mb-4">👥 Manage Users</h2>
+      {/* ========== Plans Tab ========== */}
+      {activeTab === "plans" && (
+        <div className="space-y-4">
+          <form onSubmit={savePlan} className="bg-white rounded p-4 shadow grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+            <input className="col-span-2 px-3 py-2 border rounded" placeholder="Plan name (e.g., 7 days)" value={planForm.name} onChange={(e) => setPlanForm({...planForm, name: e.target.value})} />
+            <input className="px-3 py-2 border rounded" placeholder="Price (₹)" value={planForm.price} onChange={(e) => setPlanForm({...planForm, price: e.target.value})} />
+            <input className="px-3 py-2 border rounded" placeholder="Days" value={planForm.days} onChange={(e) => setPlanForm({...planForm, days: e.target.value})} />
+            <div className="flex gap-2">
+              <button type="submit" disabled={savingPlan} className="px-3 py-2 bg-blue-600 text-white rounded">{planForm.id ? "Update" : "Create"}</button>
+              <button type="button" onClick={resetPlanForm} className="px-3 py-2 bg-gray-200 rounded">Reset</button>
+            </div>
+          </form>
 
-          {/* 🔍 Search Bar */}
-          <input
-            type="text"
-            placeholder="Search by email..."
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-            className="border px-3 py-2 rounded text-sm mb-4 w-full"
-          />
-
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2">Email</th>
-                <th className="p-2">Role</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="3" className="text-center py-4 text-gray-500">
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                paginatedUsers.map((u) => (
-                  <tr key={u.id} className="border-b">
-                    <td className="p-2">{u.email}</td>
-                    <td className="p-2">{u.role}</td>
+          <div className="bg-white rounded shadow p-3">
+            <table className="w-full text-sm">
+              <thead><tr><th className="p-2">Name</th><th className="p-2">Price</th><th className="p-2">Days</th><th className="p-2">Actions</th></tr></thead>
+              <tbody>
+                {plans.map(pl => (
+                  <tr key={pl.id} className="border-t">
+                    <td className="p-2">{pl.name}</td>
+                    <td className="p-2">₹{pl.price}</td>
+                    <td className="p-2">{pl.days}</td>
                     <td className="p-2 flex gap-2">
-                      <button
-                        className="px-3 py-1 bg-blue-500 text-white rounded text-xs"
-                        onClick={() => updateUserRole(u.id, "user")}
-                      >
-                        Make User
-                      </button>
-                      <button
-                        className="px-3 py-1 bg-green-500 text-white rounded text-xs"
-                        onClick={() => updateUserRole(u.id, "admin")}
-                      >
-                        Make Admin
-                      </button>
+                      <button onClick={() => editPlan(pl)} className="px-2 py-1 bg-yellow-400 rounded text-xs">Edit</button>
+                      <button onClick={() => removePlan(pl.id)} className="px-2 py-1 bg-red-600 text-white rounded text-xs">Delete</button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+                {plans.length === 0 && <tr><td colSpan="4" className="p-4 text-center text-gray-500">No plans</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-4">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-300 rounded text-xs disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <span>
-              Page {currentPage} of {Math.ceil(filteredUsers.length / usersPerPage)}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage((prev) =>
-                  prev < Math.ceil(filteredUsers.length / usersPerPage) ? prev + 1 : prev
-                )
-              }
-              disabled={currentPage >= Math.ceil(filteredUsers.length / usersPerPage)}
-              className="px-3 py-1 bg-gray-300 rounded text-xs disabled:opacity-50"
-            >
-              Next
-            </button>
+      {/* ========== Users Tab ========== */}
+      {activeTab === "users" && (
+        <div className="space-y-4">
+          <div className="bg-white rounded shadow p-3">
+            <table className="w-full text-sm">
+              <thead><tr><th className="p-2">Email</th><th className="p-2">Role</th><th className="p-2">Actions</th></tr></thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id} className="border-t">
+                    <td className="p-2">{u.email}</td>
+                    <td className="p-2">{u.role || 'user'}</td>
+                    <td className="p-2 flex gap-2">
+                      <button onClick={() => updateUserRole(u.id, "user")} className="px-2 py-1 bg-gray-200 rounded text-xs">Make User</button>
+                      <button onClick={() => updateUserRole(u.id, "admin")} className="px-2 py-1 bg-green-600 text-white rounded text-xs">Make Admin</button>
+                      <button onClick={() => deleteUser(u.id)} className="px-2 py-1 bg-red-600 text-white rounded text-xs">Delete Doc</button>
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && <tr><td colSpan="3" className="p-4 text-center text-gray-500">No users</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========== Analytics Tab ========== */}
+      {activeTab === "analytics" && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded shadow">
+            <div className="text-sm text-gray-500">Total Users</div>
+            <div className="text-2xl font-bold">{analytics.totalUsers}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow">
+            <div className="text-sm text-gray-500">Total Products</div>
+            <div className="text-2xl font-bold">{analytics.totalProducts}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow">
+            <div className="text-sm text-gray-500">Promoted</div>
+            <div className="text-2xl font-bold">{analytics.promoted}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow">
+            <div className="text-sm text-gray-500">Pending Approval</div>
+            <div className="text-2xl font-bold">{analytics.pendingApproval}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow">
+            <div className="text-sm text-gray-500">Promotion Plans</div>
+            <div className="text-2xl font-bold">{analytics.totalPlans}</div>
           </div>
         </div>
       )}
     </motion.div>
   );
 }
-
-export default AdminPage;
