@@ -21,7 +21,7 @@ const ProductDetails = () => {
     const fetchProduct = async () => {
       try {
         const productRef = doc(db, 'products', id);
-        const productSnap = await getDoc(productRef);
+        const productSnap = await getDoc(productRef); 
         if (productSnap.exists()) {
           const data = { id: productSnap.id, ...productSnap.data() };          setProduct(data);
           if (data.imageUrls?.length > 0) {
