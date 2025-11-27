@@ -12,6 +12,32 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
+// ==========================================================
+// ✅ Your Replaced/Updated Image Upload Function
+// ==========================================================
+const uploadImages = async (files, userId) => {
+  const uploadedUrls = [];
+
+  for (const file of files) {
+    const fileName = `${Date.now()}_${file.name}`;
+    // Good: Using userId in the path for better organization and security rules
+    const storageRef = ref(storage, `productImages/${userId}/${fileName}`);
+
+    try {
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      uploadedUrls.push(downloadURL);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      // Fail fast or continue? Here we throw to stop the product creation
+      throw new Error(`Failed to upload image ${file.name}`);
+    }
+  }
+
+  return uploadedUrls;
+};
+// ==========================================================
+
 const AddProduct = () => {
   const [formData, setFormData] = useState({
     title: "",
@@ -29,8 +55,9 @@ const AddProduct = () => {
 
   const DAILY_LIMIT = 3;
 
-  // ✅ Auto-detect user location
+  // ✅ Auto-detect user location (kept as is)
   useEffect(() => {
+    // ... (Geolocation logic remains the same)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -57,7 +84,7 @@ const AddProduct = () => {
     }
   }, []);
 
-  // ✅ Handle input changes
+  // ✅ Handle input changes (kept as is)
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -68,13 +95,30 @@ const AddProduct = () => {
   // ✅ Handle image selection + preview
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+    
+    // Cleanup previous previews to prevent memory leak
+    previewURLs.forEach(URL.revokeObjectURL); 
+
     if (files.length > 6) {
       toast.error("⚠️ You can upload up to 6 images only.");
+      setImages([]);
+      setPreviewURLs([]);
       return;
     }
+    
     setImages(files);
     setPreviewURLs(files.map((file) => URL.createObjectURL(file)));
   };
+
+  // ✅ Remove image from selection
+  const handleRemoveImage = (indexToRemove) => {
+    // Revoke the URL for the image being removed
+    URL.revokeObjectURL(previewURLs[indexToRemove]);
+
+    setImages(images.filter((_, index) => index !== indexToRemove));
+    setPreviewURLs(previewURLs.filter((_, index) => index !== indexToRemove));
+  };
+
 
   // ✅ Submit product
   const handleSubmit = async (e) => {
@@ -98,7 +142,7 @@ const AddProduct = () => {
     setUploading(true);
 
     try {
-      // ✅ Daily post limit check
+      // ✅ Daily post limit check (kept as is)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -116,18 +160,9 @@ const AddProduct = () => {
         return;
       }
 
-      // ✅ Upload all images
-      const imageUrls = [];
-      for (const image of images) {
-        const imageRef = ref(
-          storage,
-          `productImages/${Date.now()}_${image.name}`
-        );
-        await uploadBytes(imageRef, image);
-        const imageUrl = await getDownloadURL(imageRef);
-        imageUrls.push(imageUrl);
-      }
-
+      // 🔄 Use the new uploadImages function
+      const imageUrls = await uploadImages(images, auth.currentUser.uid);
+      
       // ✅ Save product in Firestore
       await addDoc(productsRef, {
         ...formData,
@@ -141,15 +176,19 @@ const AddProduct = () => {
       });
 
       toast.success("✅ Product added successfully!");
+      // Cleanup previews on success
+      previewURLs.forEach(URL.revokeObjectURL);
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (error) {
       console.error("Error adding product:", error);
-      toast.error("❌ Something went wrong. Please try again.");
+      // Improve error message for the user
+      toast.error(`❌ Failed to add product: ${error.message.includes("upload") ? "Image upload failed." : "Please check your network."}`);
     } finally {
       setUploading(false);
     }
   };
 
+  // ✅ Component JSX (kept the same structure)
   return (
     <div className="flex justify-center items-center py-10 px-4 bg-gray-100 min-h-screen">
       <Toaster position="top-center" reverseOrder={false} />
@@ -242,7 +281,8 @@ const AddProduct = () => {
               accept="image/*"
               multiple
               onChange={handleImageChange}
-              required
+              // Set required to false here since we handle the check manually
+              required={images.length === 0} 
               className="w-full px-4 py-2 border rounded-xl shadow-sm text-sm sm:text-base"
             />
 
@@ -255,6 +295,15 @@ const AddProduct = () => {
                       alt={`Preview ${idx}`}
                       className="rounded-xl w-full h-32 object-cover border shadow"
                     />
+                    {/* ✅ Add a delete button to the image preview */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 text-xs opacity-80 hover:opacity-100 transition duration-300"
+                      aria-label="Remove image"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                   </div>
                 ))}
               </div>
