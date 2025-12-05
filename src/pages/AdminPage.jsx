@@ -11,12 +11,13 @@ import {
   deleteDoc,
   addDoc,
   serverTimestamp,
+  query,
+  where,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-// UPDATED: Added useNavigate here
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 /**
  * AdminPage - Full marketplace management
@@ -24,9 +25,6 @@ import { Link, useNavigate } from "react-router-dom";
  */
 
 export default function AdminPage() {
-  // UPDATED: Initialize navigation hook
-  const navigate = useNavigate();
-
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
@@ -169,8 +167,12 @@ export default function AdminPage() {
       if (product.imageUrls?.length) {
         for (const url of product.imageUrls) {
           try {
+            // get storage path from url — only works if you stored path earlier; if using full URL, we attempt to delete by ref
+            // If you stored storage path separately, use that instead.
+            // This is best-effort: if fails, continue
             const pathParts = url.split("/o/");
             if (pathParts.length > 1) {
+              // path encoded after /o/
               const after = decodeURIComponent(pathParts[1].split("?")[0]);
               await deleteObject(ref(storage, after));
             }
@@ -287,48 +289,29 @@ export default function AdminPage() {
 
   return (
     <motion.div className="p-6 max-w-6xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">⚡ Admin Dashboard</h1>
           <p className="text-sm text-gray-600">Welcome {user.email} — Full Marketplace Management</p>
         </div>
 
-        {/* UPDATED: Added new navigation buttons along with existing tabs */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2">
           <button
             className={`px-3 py-1 rounded ${activeTab === "products" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
             onClick={() => setActiveTab("products")}
           >Products</button>
-          
           <button
             className={`px-3 py-1 rounded ${activeTab === "plans" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
             onClick={() => setActiveTab("plans")}
           >Plans</button>
-          
           <button
             className={`px-3 py-1 rounded ${activeTab === "users" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
             onClick={() => setActiveTab("users")}
           >Users</button>
-          
           <button
             className={`px-3 py-1 rounded ${activeTab === "analytics" ? "bg-blue-600 text-white" : "bg-gray-100"}`}
             onClick={() => setActiveTab("analytics")}
           >Analytics</button>
-
-          {/* New Page Links */}
-          <button 
-            className="px-3 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
-            onClick={() => navigate("/admin/featured-requests")}
-          >
-            Featured Requests
-          </button>
-
-          <button 
-            className="px-3 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
-            onClick={() => navigate("/admin/promote-requests")}
-          >
-            Promote Requests
-          </button>
         </div>
       </div>
 
