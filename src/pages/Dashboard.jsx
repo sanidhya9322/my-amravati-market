@@ -183,17 +183,22 @@ function Dashboard() {
 
                   {/* STATUS */}
                   <div className="mt-3">
-                    {isActivePromotion ? (
-                      <span className="inline-block text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                        🚀 Promoted till{" "}
-                        {product.promotionExpiresAt
-                          .toDate()
-                          .toLocaleDateString()}
-                      </span>
-                    ) : (
-                      <span className="inline-block text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">
-                        Not promoted
-                      </span>
+                    {!product.approved && (
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded">
+                     ⏳ Pending approval
+                   </span>
+                    )}
+
+                   {product.approved && !product.promoted && (
+                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded">
+                 ✅ Live
+              </span>
+                    )}
+
+                   {product.approved && product.promoted && (
+                 <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded">
+                  🚀 Promoted
+                </span>
                     )}
                   </div>
 

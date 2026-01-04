@@ -8,23 +8,24 @@ import {
   query,
   where,
   getDocs,
+  Timestamp,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
 /* ================= IMAGE UPLOAD ================= */
 const uploadImages = async (files, userId) => {
-  const uploadedUrls = [];
+  const urls = [];
 
   for (const file of files) {
     const fileName = `${Date.now()}_${file.name}`;
     const storageRef = ref(storage, `productImages/${userId}/${fileName}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    uploadedUrls.push(downloadURL);
+    const snap = await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(snap.ref);
+    urls.push(url);
   }
 
-  return uploadedUrls;
+  return urls;
 };
 /* ================================================= */
 
@@ -41,11 +42,11 @@ const AddProduct = () => {
   const [images, setImages] = useState([]);
   const [previewURLs, setPreviewURLs] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const DAILY_LIMIT = 3;
 
-  /* ===== Auto location (unchanged) ===== */
+  /* ===== AUTO LOCATION ===== */
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -68,17 +69,17 @@ const AddProduct = () => {
     });
   }, []);
 
+  /* ===== HANDLERS ===== */
   const handleChange = (e) => {
     setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
-  /* ===== Images ===== */
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     previewURLs.forEach(URL.revokeObjectURL);
 
     if (files.length > 6) {
-      toast.error("You can upload up to 6 images only");
+      toast.error("You can upload maximum 6 images");
       return;
     }
 
@@ -86,13 +87,13 @@ const AddProduct = () => {
     setPreviewURLs(files.map((f) => URL.createObjectURL(f)));
   };
 
-  const handleRemoveImage = (i) => {
-    URL.revokeObjectURL(previewURLs[i]);
-    setImages(images.filter((_, idx) => idx !== i));
-    setPreviewURLs(previewURLs.filter((_, idx) => idx !== i));
+  const handleRemoveImage = (index) => {
+    URL.revokeObjectURL(previewURLs[index]);
+    setImages(images.filter((_, i) => i !== index));
+    setPreviewURLs(previewURLs.filter((_, i) => i !== index));
   };
 
-  /* ===== Submit ===== */
+  /* ===== SUBMIT ===== */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -107,71 +108,88 @@ const AddProduct = () => {
     }
 
     if (images.length === 0) {
-      toast.error("Please add at least one image");
+      toast.error("Please upload at least one image");
       return;
     }
 
     setUploading(true);
 
     try {
+      /* 🔥 FIXED DAILY LIMIT LOGIC */
+      const q = query(
+        collection(db, "products"),
+        where("userId", "==", auth.currentUser.uid)
+      );
+      const snap = await getDocs(q);
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const q = query(
-        collection(db, "products"),
-        where("userId", "==", auth.currentUser.uid),
-        where("createdAt", ">=", today)
-      );
+      const todayCount = snap.docs.filter((d) => {
+        const created = d.data().createdAt?.toDate?.();
+        return created && created >= today;
+      }).length;
 
-      const snap = await getDocs(q);
-      if (snap.size >= DAILY_LIMIT) {
-        toast.error("Daily limit reached (3 products)");
+      if (todayCount >= DAILY_LIMIT) {
+        toast.error("Daily limit reached (3 products per day)");
         setUploading(false);
         return;
       }
 
+      /* 🔥 IMAGE UPLOAD */
       const imageUrls = await uploadImages(images, auth.currentUser.uid);
 
+      /* 🔥 SAVE PRODUCT */
       await addDoc(collection(db, "products"), {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
         price: Number(formData.price),
+        category: formData.category,
+        location: formData.location,
+        sellerPhone: formData.sellerPhone || null,
+
         imageUrls,
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
+
+        approved: false,
+        promoted: false,
+
         createdAt: serverTimestamp(),
+        createdAtClient: Timestamp.now(),
       });
 
-      toast.success("Product posted successfully 🎉");
+      toast.success("Product added successfully 🎉");
       previewURLs.forEach(URL.revokeObjectURL);
+
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
-      toast.error("Something went wrong. Try again.");
+      console.error(err);
+      toast.error("Failed to add product. Try again.");
     } finally {
       setUploading(false);
     }
   };
 
+  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center px-4 py-10">
       <Toaster position="top-center" />
 
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
-        {/* ===== HEADER ===== */}
         <h2 className="text-2xl sm:text-3xl font-bold text-center">
-          Add New Product
+          📦 Add New Product
         </h2>
         <p className="text-center text-sm text-gray-500 mt-1">
-          Step 1 of 3 — Product details
+          Post your product for Amravati buyers
         </p>
 
-        {/* ===== FORM ===== */}
         <form onSubmit={handleSubmit} className="space-y-5 mt-6">
-
           <input
             name="title"
             value={formData.title}
             onChange={handleChange}
-            placeholder="Product title (e.g. Class 12 Physics Notes)"
+            placeholder="Product title"
             className="w-full px-4 py-3 border rounded-lg"
             required
           />
@@ -180,7 +198,7 @@ const AddProduct = () => {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Describe condition, usage, defects (if any)"
+            placeholder="Product description"
             rows={4}
             className="w-full px-4 py-3 border rounded-lg"
             required
@@ -192,7 +210,7 @@ const AddProduct = () => {
               type="number"
               value={formData.price}
               onChange={handleChange}
-              placeholder="Price (₹)"
+              placeholder="Price ₹"
               className="px-4 py-3 border rounded-lg"
               required
             />
@@ -200,7 +218,7 @@ const AddProduct = () => {
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="Your area (auto-filled)"
+              placeholder="Location"
               className="px-4 py-3 border rounded-lg"
               required
             />
@@ -225,18 +243,14 @@ const AddProduct = () => {
               name="sellerPhone"
               value={formData.sellerPhone}
               onChange={handleChange}
-              placeholder="WhatsApp number (10 digits)"
+              placeholder="WhatsApp number (optional)"
               className="px-4 py-3 border rounded-lg"
-              required
             />
           </div>
 
-          {/* ===== IMAGES ===== */}
+          {/* IMAGES */}
           <div>
-            <p className="text-sm font-medium mb-2">
-              Product images (max 6)
-            </p>
-
+            <p className="text-sm font-medium mb-2">Product images (max 6)</p>
             <input
               type="file"
               accept="image/*"
@@ -267,13 +281,12 @@ const AddProduct = () => {
             )}
           </div>
 
-          {/* ===== TRUST ===== */}
+          {/* TRUST */}
           <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-            🔒 Buyers will chat with you inside MyAmravati Market.  
+            🔒 Buyers will contact you via secure in-app chat.  
             Your phone number is not shown publicly.
           </div>
 
-          {/* ===== SUBMIT ===== */}
           <button
             disabled={uploading}
             className={`w-full py-3 rounded-xl text-white font-semibold ${
