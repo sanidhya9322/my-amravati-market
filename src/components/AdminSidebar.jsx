@@ -1,5 +1,13 @@
 import React from "react";
-import { LogOut, ShoppingBag, Users, ClipboardList } from "lucide-react";
+import {
+  LogOut,
+  ShoppingBag,
+  Users,
+  ClipboardList,
+  BarChart3,
+  LayoutDashboard,
+  AlertTriangle,
+} from "lucide-react";
 import { auth } from "../firebase/firebaseConfig";
 
 const AdminSidebar = ({ activeTab, setActiveTab }) => {
@@ -8,51 +16,77 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
     window.location.href = "/";
   };
 
+  const Item = ({ tab, icon: Icon, label }) => (
+    <button
+      onClick={() => setActiveTab(tab)}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition ${
+        activeTab === tab
+          ? "bg-indigo-600 text-white"
+          : "text-gray-700 hover:bg-gray-100"
+      }`}
+    >
+      <Icon size={18} />
+      {label}
+    </button>
+  );
+
   return (
-    <div className="w-64 bg-white shadow-md p-4 flex flex-col">
-      <h2 className="text-2xl font-bold mb-6 text-indigo-600 text-center">
-        Admin Panel
-      </h2>
-      <button
-        onClick={() => setActiveTab("products")}
-        className={`flex items-center p-3 mb-2 rounded-md transition ${
-          activeTab === "products"
-            ? "bg-indigo-600 text-white"
-            : "hover:bg-gray-100 text-gray-700"
-        }`}
-      >
-        <ShoppingBag className="mr-2" size={18} /> Products
-      </button>
+    <aside className="w-64 bg-white border-r min-h-screen flex flex-col">
+      {/* Header */}
+      <div className="p-5 border-b">
+        <h2 className="text-xl font-bold text-indigo-600">
+          Admin Panel
+        </h2>
+        <p className="text-xs text-gray-500 mt-1">
+          MyAmravati Market
+        </p>
+      </div>
 
-      <button
-        onClick={() => setActiveTab("users")}
-        className={`flex items-center p-3 mb-2 rounded-md transition ${
-          activeTab === "users"
-            ? "bg-indigo-600 text-white"
-            : "hover:bg-gray-100 text-gray-700"
-        }`}
-      >
-        <Users className="mr-2" size={18} /> Users
-      </button>
+      {/* Navigation */}
+      <div className="flex-1 p-4 space-y-1">
+        <Item
+          tab="dashboard"
+          icon={LayoutDashboard}
+          label="Dashboard"
+        />
+        <Item
+          tab="products"
+          icon={ShoppingBag}
+          label="Products"
+        />
+        <Item
+          tab="users"
+          icon={Users}
+          label="Users"
+        />
+        <Item
+          tab="orders"
+          icon={ClipboardList}
+          label="Orders"
+        />
+        <Item
+          tab="seller-report"
+          icon={AlertTriangle}
+          label="Seller Reports"
+        />
+        <Item
+          tab="analytics"
+          icon={BarChart3}
+          label="Analytics"
+        />
+      </div>
 
-      <button
-        onClick={() => setActiveTab("orders")}
-        className={`flex items-center p-3 mb-2 rounded-md transition ${
-          activeTab === "orders"
-            ? "bg-indigo-600 text-white"
-            : "hover:bg-gray-100 text-gray-700"
-        }`}
-      >
-        <ClipboardList className="mr-2" size={18} /> Orders
-      </button>
-
-      <button
-        onClick={logout}
-        className="mt-auto flex items-center justify-center bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition"
-      >
-        <LogOut size={16} className="mr-2" /> Logout
-      </button>
-    </div>
+      {/* Logout */}
+      <div className="p-4 border-t">
+        <button
+          onClick={logout}
+          className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm transition"
+        >
+          <LogOut size={16} />
+          Logout
+        </button>
+      </div>
+    </aside>
   );
 };
 

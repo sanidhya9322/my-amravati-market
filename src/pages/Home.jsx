@@ -1,186 +1,158 @@
-import React, { useRef } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 
-function Home() {
-  // Refs for scroll animations
-  const step1Ref = useRef(null);
-  const step2Ref = useRef(null);
-  const step3Ref = useRef(null);
-
-  const step1InView = useInView(step1Ref, { once: true });
-  const step2InView = useInView(step2Ref, { once: true });
-  const step3InView = useInView(step3Ref, { once: true });
-
+const Home = () => {
   return (
-    <>
-      {/* === Navbar === */}
-      <motion.header
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="bg-gray-900 text-white flex justify-between items-center px-6 py-3 shadow-md"
-      >
-        <span className="font-bold text-lg sm:text-xl">
-          MyAmravati Market
-        </span>
-        <nav className="space-x-4 text-sm sm:text-base">
-          <Link to="/" className="hover:text-blue-400 transition">
-            Home
-          </Link>
-          <Link to="/browse" className="hover:text-blue-400 transition">
-            Browse
-          </Link>
-          <Link to="/add-product" className="hover:text-blue-400 transition">
-            Sell
-          </Link>
-        </nav>
-      </motion.header>
+    <main className="bg-white">
 
-      {/* === Hero Section === */}
-      <motion.section
-        className="text-center px-4 py-16 bg-gradient-to-r from-blue-50 to-green-50"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7 }}
-      >
-        <h1 className="font-bold text-3xl sm:text-5xl mb-4 leading-tight">
-          🎉 Welcome to <br className="sm:hidden" />{" "}
-          <span className="text-blue-600">MyAmravati Market ✨</span>
-        </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto mb-6 text-base sm:text-lg">
-          A digital bazaar for students, home entrepreneurs, and locals of the
-          Amravati district. Buy and sell books, crafts, handmade food,
-          second-hand items, and more.
+      {/* ================= HERO ================= */}
+      <section className="max-w-7xl mx-auto px-4 pt-20 pb-16 text-center">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-3xl sm:text-5xl font-bold text-gray-900 leading-tight"
+        >
+          Buy & Sell Locally in Amravati
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mt-4 text-gray-600 max-w-2xl mx-auto text-base sm:text-lg"
+        >
+          Books, handmade items, home food, second-hand goods & more.  
+          Chat securely with local sellers — no phone numbers shared.
+        </motion.p>
+
+        <p className="mt-2 text-xs text-gray-500">
+          Serving Amravati city & nearby areas only.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
           <Link
             to="/browse"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-sm transition"
           >
             Browse Products
           </Link>
+
           <Link
             to="/add-product"
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
+            className="text-blue-600 hover:underline text-sm font-medium"
           >
-            Add Your Product
+            Start selling →
           </Link>
-        </div>
-      </motion.section>
+        </motion.div>
+      </section>
 
-      {/* === How It Works === */}
-      <section className="bg-gray-100 py-16 px-6">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-12">
-          How MyAmravati Market Works
-        </h2>
-
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Step 1 */}
-          <motion.div
-            ref={step1Ref}
-            initial={{ opacity: 0, y: 50 }}
-            animate={step1InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transform transition duration-300"
-          >
-            <div className="text-5xl mb-4">📸</div>
-            <h3 className="text-xl font-semibold mb-2">List Your Product</h3>
-            <p className="text-gray-600">
-              Upload a photo, set your price, write details, and share your
-              WhatsApp number.
-            </p>
-          </motion.div>
-
-          {/* Step 2 */}
-          <motion.div
-            ref={step2Ref}
-            initial={{ opacity: 0, y: 50 }}
-            animate={step2InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transform transition duration-300"
-          >
-            <div className="text-5xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold mb-2">Browse & Contact</h3>
-            <p className="text-gray-600">
-              Buyers search local listings and chat directly with sellers via
-              WhatsApp.
-            </p>
-          </motion.div>
-
-          {/* Step 3 */}
-          <motion.div
-            ref={step3Ref}
-            initial={{ opacity: 0, y: 50 }}
-            animate={step3InView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-            className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transform transition duration-300"
-          >
-            <div className="text-5xl mb-4">🤝</div>
-            <h3 className="text-xl font-semibold mb-2">Deal & Deliver</h3>
-            <p className="text-gray-600">
-              Meet nearby, confirm the deal, and exchange items securely and
-              quickly.
-            </p>
-          </motion.div>
-        </div>
-
-        <div className="text-center mt-12">
-          <Link to="/add-product">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
-            >
-              Start Selling Now
-            </motion.button>
-          </Link>
+      {/* ================= TRUST STRIP ================= */}
+      <section className="border-t border-b bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-sm text-gray-700">
+          <div>🔒 Secure in-app chat</div>
+          <div>👥 Only Amravati sellers</div>
+          <div>🚫 No phone number sharing</div>
         </div>
       </section>
 
-      {/* === Support Section === */}
-      <motion.section
-        className="bg-white py-16 px-6 border-t border-gray-200"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-      >
-        <div className="max-w-3xl mx-auto text-center">
-          <h3 className="text-2xl font-bold text-gray-800 mb-4">Need Help?</h3>
-          <p className="text-gray-600 mb-6">
-            Facing issues or have questions? We’re here to help you 24/7.
-          </p>
-          <a
-            href="mailto:myamravatimart007@gmail.com?subject=Support Request – MyAmravati Market"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
-          >
-            Email Us: myamravatimart007@gmail.com
-          </a>
-        </div>
-      </motion.section>
+      {/* ================= HOW IT WORKS ================= */}
+      <section className="max-w-7xl mx-auto px-4 py-16">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12">
+          How MyAmravati Market Works
+        </h2>
 
-      {/* === Footer === */}
-      <footer className="bg-gray-900 text-gray-300 text-center py-6">
-        <p className="mb-2">
-          © 2025 MyAmravati Market • Made with ❤️ for Amravati
-        </p>
-        <div className="space-x-3 text-sm">
-          <Link to="/terms" className="hover:underline">
-            Terms & Conditions
-          </Link>
-          <Link to="/privacy" className="hover:underline">
-            Privacy Policy
-          </Link>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              title: "List or Browse Products",
+              desc: "Post what you want to sell or explore local listings.",
+              icon: "📦",
+            },
+            {
+              title: "Chat Securely",
+              desc: "Talk to buyers or sellers inside the platform.",
+              icon: "💬",
+            },
+            {
+              title: "Meet & Close the Deal",
+              desc: "Meet locally and complete the exchange with trust.",
+              icon: "🤝",
+            },
+          ].map((step, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="bg-white rounded-xl shadow-sm p-6 text-center"
+            >
+              <div className="text-4xl mb-3">{step.icon}</div>
+              <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+              <p className="text-gray-600 text-sm">{step.desc}</p>
+            </motion.div>
+          ))}
         </div>
-        <p className="mt-2 text-xs">
-          Built for Amravati |{" "}
-          <a href="#" className="text-blue-400 hover:underline">
-            Powered by you
-          </a>
+      </section>
+
+      {/* ================= WHO IS IT FOR ================= */}
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-10">
+            Built for Local People
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              🎓 <strong>Students</strong>
+              <p className="mt-2 text-gray-600">
+                Buy & sell books, notes, gadgets and essentials.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              🏪 <strong>Shop Owners</strong>
+              <p className="mt-2 text-gray-600">
+                Take your local shop online without extra cost.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              🏠 <strong>Home Entrepreneurs</strong>
+              <p className="mt-2 text-gray-600">
+                Sell homemade food, crafts and handmade items.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FINAL CTA ================= */}
+      <section className="max-w-6xl mx-auto px-4 py-16 text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+          Start Your Local Journey Today
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Join Amravati’s own digital marketplace.
         </p>
-      </footer> 
-    </>
+
+        <Link
+          to="/browse"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-sm transition"
+        >
+          Explore Products
+        </Link>
+      </section>
+
+    </main>
   );
-}
+};
 
 export default Home;

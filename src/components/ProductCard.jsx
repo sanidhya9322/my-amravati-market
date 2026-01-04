@@ -5,97 +5,83 @@ import { Link } from "react-router-dom";
 // Utils
 import formatPrice from "../utils/formatPrice";
 import getImageUrl from "../utils/getImageUrl";
-import truncate from "../utils/truncate";
 
 // Icons
 import HeartIcon from "../icons/HeartIcon";
-import CallIcon from "../icons/CallIcon";
 import StarIcon from "../icons/StarIcon";
 
 const ProductCard = ({ product, onToggleFavorite }) => {
-  // Destructure for better readability, but the existing code is fine
-  const { title, price, description: rawDescription } = product || {};
+  if (!product) return null;
+
+  const {
+    id,
+    title,
+    price,
+    location,
+    promoted,
+    isFavorite,
+  } = product;
+
   const imageSrc = getImageUrl(product);
-  const formattedTitle = title || "Untitled Product";
-  const formattedPrice = price ? formatPrice(price) : "Price not set";
-  // The original code calculated 'description' but didn't use it.
-  // We'll use the raw description for the line-clamp-2 paragraph, as intended.
-  const description = truncate(rawDescription, 60); // This variable is not used in the final JSX structure, but kept for context.
+  const displayTitle = title || "Untitled product";
+  const displayPrice = price ? formatPrice(price) : "Price not set";
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition p-3 flex flex-col h-full"
-      aria-labelledby={`product-title-${product.id}`}
+      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.01 }}
+      className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden"
     >
-      {/* Header: badge + favorite btn */}
-      <div className="flex items-start justify-between gap-2">
-        {product.promoted && (
-          <span className="flex items-center gap-1 text-xs bg-yellow-300 px-2 py-1 rounded-full shadow-sm font-medium">
-            <StarIcon size={14} />
+      {/* Image + overlays */}
+      <div className="relative">
+        {/* Promoted badge */}
+        {promoted && (
+          <span className="absolute top-2 left-2 z-10 flex items-center gap-1 text-xs bg-yellow-300 px-2 py-1 rounded-full font-medium shadow-sm">
+            <StarIcon size={12} />
             Promoted
           </span>
         )}
 
+        {/* Favorite button */}
         <button
-          onClick={() => onToggleFavorite(product)} // Assuming onToggleFavorite takes the product
-          aria-label="toggle favorite"
-          className="p-2 rounded-lg border hover:bg-gray-50 transition"
+          onClick={(e) => {
+            e.preventDefault();
+            onToggleFavorite(product);
+          }}
+          aria-label="Add to favorites"
+          className="absolute top-2 right-2 z-10 p-2 bg-white/90 rounded-full shadow hover:bg-white transition"
         >
-          <HeartIcon filled={product.isFavorite} size={20} />
+          <HeartIcon filled={isFavorite} size={18} />
         </button>
+
+        <Link to={`/product/${id}`}>
+          <div className="w-full aspect-[4/3] bg-gray-100">
+            <img
+              src={imageSrc}
+              alt={displayTitle}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </Link>
       </div>
 
-      {/* Main Product Details (Wrapped in Link) */}
-      <Link to={`/product/${product.id}`} className="mt-3 flex-1 flex flex-col">
-        {/* Image */}
-        <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden">
-          <img
-            src={imageSrc}
-            alt={formattedTitle}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
+      {/* Content */}
+      <Link to={`/product/${id}`} className="block p-3">
+        <div className="text-base font-bold text-green-600">
+          {displayPrice}
         </div>
 
-        {/* Text Details */}
-        <div className="mt-3">
-          <h3
-            id={`product-title-${product.id}`}
-            className="text-sm font-semibold line-clamp-2"
-          >
-            {formattedTitle}
-          </h3>
-
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-            {product?.description}
-          </p>
-
-          <div className="mt-2 flex items-center justify-between">
-            <div className="text-sm font-bold">{formattedPrice}</div>
-            <div className="text-xs text-gray-500">{product?.location}</div>
-          </div>
-
-          <div className="mt-2 flex gap-2 text-xs">
-            <span className="bg-blue-50 px-2 py-1 rounded-full">
-              {product?.category}
-            </span>
-          </div>
+        <div className="text-xs text-gray-500 mt-0.5">
+          {location}
         </div>
+
+        <h3 className="mt-1 text-sm font-semibold line-clamp-2">
+          {displayTitle}
+        </h3>
       </Link>
-      {/* End of Link */}
-
-      {/* Call button MUST be outside Link */}
-      {product?.sellerPhone && (
-        <a
-          href={`tel:${product.sellerPhone}`}
-          className="mt-2 inline-block w-fit text-xs px-2 py-1 rounded-full border hover:bg-gray-50 transition"
-        >
-          Call
-        </a>
-      )}
     </motion.article>
   );
 };

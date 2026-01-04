@@ -3,133 +3,201 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { listenToConversations } from "../utils/chatService";
 
-function Navbar() {
+const Navbar = () => {
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // 🔑 store role (admin / user)
-  const [menuOpen, setMenuOpen] = useState(false); // ✅ mobile menu toggle
+  const [role, setRole] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
+  // 🔐 Auth + role + unread messages
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currUser) => {
       setUser(currUser);
+
       if (currUser) {
-        // ✅ Fetch role from Firestore
-        const userDoc = await getDoc(doc(db, "users", currUser.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().role || "user");
-        }
+        const snap = await getDoc(doc(db, "users", currUser.uid));
+        if (snap.exists()) setRole(snap.data().role || "user");
+
+        const unsubChats = listenToConversations(currUser.uid, (chats) => {
+          const count = chats.filter(
+            (c) => c.buyerUnread > 0 || c.sellerUnread > 0
+          ).length;
+          setUnreadCount(count);
+        });
+
+        return () => unsubChats && unsubChats();
       } else {
         setRole(null);
+        setUnreadCount(0);
       }
     });
+
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = () => {
-    signOut(auth);
+  const handleLogout = async () => {
+    await signOut(auth);
     navigate("/");
+    setMenuOpen(false);
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo / Brand */}
-<Link to="/" className="flex items-center gap-2">
-  <img
-    src="/logo192.png"   // ✅ make sure your logo file is inside public/
-    alt="MyAmravati Logo"
-    className="h-10 w-10 object-contain"
-  />
-  <span className="text-xl font-bold text-blue-600">MyAmravati Market</span>
-</Link>
+    <nav className="bg-white sticky top-0 z-50 border-b">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
 
-          {/* Hamburger Menu (Mobile only) */}
-          <button
-            className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-100"
-            onClick={() => setMenuOpen(!menuOpen)}
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/logo192.png" alt="MyAmravati" className="h-8 w-8" />
+          <span className="font-bold text-blue-600 text-lg">
+            MyAmravati
+          </span>
+        </Link>
+
+        {/* Desktop nav */}
+        <div className="hidden sm:flex items-center gap-6 text-sm">
+          <Link to="/browse" className="hover:text-blue-600">
+            Browse
+          </Link>
+          <Link
+            to="/add-product"
+            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition"
           >
-            <svg
-              className="h-6 w-6"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+            Sell
+          </Link>
+        </div>
+
+        {/* Right section */}
+        <div className="flex items-center gap-4">
+
+          {/* Messages (desktop only) */}
+          {user && (
+            <Link
+              to="/messages"
+              className="relative text-sm hover:text-blue-600 hidden sm:block"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+              Messages
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs px-1.5 rounded-full">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
 
-          {/* Menu Items */}
-          <div
-            className={`${
-              menuOpen ? "flex" : "hidden"
-            } sm:flex flex-col sm:flex-row sm:items-center sm:gap-3 absolute sm:static top-16 left-0 w-full sm:w-auto bg-white sm:bg-transparent shadow sm:shadow-none p-4 sm:p-0`}
+          {/* User dropdown (desktop only) */}
+          {user ? (
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold"
+              >
+                {user.email?.charAt(0).toUpperCase()}
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-md text-sm overflow-hidden">
+                  <Link to="/dashboard" className="block px-4 py-2 hover:bg-gray-100">
+                    Dashboard
+                  </Link>
+                  <Link to="/favorites" className="block px-4 py-2 hover:bg-gray-100">
+                    Wishlist
+                  </Link>
+                  {role === "admin" && (
+                    <Link to="/admin" className="block px-4 py-2 hover:bg-gray-100">
+                      Admin
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center gap-3 text-sm">
+              <Link to="/login" className="hover:text-blue-600">
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="border border-blue-600 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-600 hover:text-white transition"
+              >
+                Signup
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="sm:hidden text-xl"
+            aria-label="Open menu"
           >
-            {user ? (
+            ☰
+          </button>
+        </div>
+      </div>
+
+      {/* 📱 Mobile menu */}
+      {menuOpen && (
+        <div className="sm:hidden bg-white border-t">
+          <div className="flex flex-col text-sm divide-y">
+
+            <Link to="/browse" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+              Browse
+            </Link>
+
+            <Link to="/add-product" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+              Sell
+            </Link>
+
+            {user && (
               <>
-                <Link
-                  to="/dashboard"
-                  className="px-3 py-1 border border-blue-600 text-blue-600 rounded hover:bg-blue-600 hover:text-white text-sm mb-2 sm:mb-0"
-                >
+                <Link to="/messages" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+                  Messages {unreadCount > 0 && `(${unreadCount})`}
+                </Link>
+
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="px-4 py-3">
                   Dashboard
                 </Link>
 
-                {/* 🔑 Show only if role === "admin" */}
                 {role === "admin" && (
-                  <Link
-                    to="/admin"
-                    className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 text-sm mb-2 sm:mb-0"
-                  >
-                    ⚡ Admin
+                  <Link to="/admin" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+                    Admin
                   </Link>
                 )}
 
-                <span className="text-gray-700 text-sm mb-2 sm:mb-0">
-                  {user.email}
-                </span>
-
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1 border border-red-600 text-red-600 rounded hover:bg-red-600 hover:text-white text-sm mb-2 sm:mb-0"
+                  className="px-4 py-3 text-left text-red-600"
                 >
                   Logout
                 </button>
-
-                <Link
-                  to="/favorites"
-                  className="px-3 py-1 text-gray-600 hover:text-red-500 text-sm"
-                >
-                  ❤️ Wishlist
-                </Link>
               </>
-            ) : (
+            )}
+
+            {!user && (
               <>
-                <Link
-                  to="/login"
-                  className="px-3 py-1 border border-blue-600 text-blue-600 rounded hover:bg-blue-600 hover:text-white text-sm mb-2 sm:mb-0"
-                >
+                <Link to="/login" onClick={() => setMenuOpen(false)} className="px-4 py-3">
                   Login
                 </Link>
-                <Link
-                  to="/signup"
-                  className="px-3 py-1 border border-green-600 text-green-600 rounded hover:bg-green-600 hover:text-white text-sm"
-                >
+                <Link to="/signup" onClick={() => setMenuOpen(false)} className="px-4 py-3">
                   Signup
                 </Link>
               </>
             )}
           </div>
         </div>
-      </div>
+      )}
     </nav>
   );
-}
+};
 
 export default Navbar;

@@ -1,5 +1,5 @@
 // -------------------------------------------
-// App.jsx (Optimized + Clean Architecture)
+// App.jsx (Clean, Fixed & Production-Ready)
 // -------------------------------------------
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -19,9 +19,16 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminPage from "./pages/AdminPage";
+import AdminFeaturedRequests from "./pages/AdminFeaturedRequests";
+import AdminPromoteRequests from "./pages/AdminPromoteRequests";
+import Messages from "./pages/Messages";
+import Chat from "./pages/Chat";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSellerReport from "./pages/AdminSellerReport";
 
 // Components
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
@@ -36,7 +43,7 @@ import ReactGA from "react-ga4";
 import { Toaster } from "react-hot-toast";
 
 // -------------------------------------------
-// Initialize GA (Only once)
+// Initialize GA (once)
 // -------------------------------------------
 ReactGA.initialize("G-4PWTPFE8LR");
 
@@ -52,18 +59,19 @@ function PageTrackingWrapper() {
 // Main App
 // -------------------------------------------
 function App() {
-  useLenis(); // Smooth scrolling
+  useLenis();
 
   return (
     <Router>
       <PageTrackingWrapper />
+
+      {/* Global Navbar */}
       <Navbar />
 
       {/* Global Toaster */}
       <Toaster position="top-right" reverseOrder={false} />
 
       <Routes>
-
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<Browse />} />
@@ -72,6 +80,24 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* Messages */}
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages/:conversationId"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User Protected Routes */}
         <Route
@@ -82,7 +108,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/add-product"
           element={
@@ -91,7 +116,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/edit/:id"
           element={
@@ -100,7 +124,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/favorites"
           element={
@@ -110,7 +133,7 @@ function App() {
           }
         />
 
-        {/* Admin Protected Routes */}
+        {/* Admin Routes */}
         <Route
           path="/admin"
           element={
@@ -119,7 +142,6 @@ function App() {
             </AdminRoute>
           }
         />
-
         <Route
           path="/admin-page"
           element={
@@ -128,11 +150,45 @@ function App() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/analytics"
+          element={
+            <AdminRoute>
+              <AdminAnalytics />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/seller-report"
+          element={
+            <AdminRoute>
+              <AdminSellerReport />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/featured-requests"
+          element={
+            <AdminRoute>
+              <AdminFeaturedRequests />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/promote-requests"
+          element={
+            <AdminRoute>
+              <AdminPromoteRequests />
+            </AdminRoute>
+          }
+        />
 
-        {/* 404 Page */}
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
-
       </Routes>
+
+      {/* Global Footer */}
+      <Footer />
     </Router>
   );
 }

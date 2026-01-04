@@ -15,33 +15,39 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
+const promotionPlans = [
+  { price: 49, days: 7, label: "₹49 • 7 days" },
+  { price: 99, days: 15, label: "₹99 • 15 days" },
+  { price: 199, days: 30, label: "₹199 • 30 days" },
+];
+
 function Dashboard() {
   const [user] = useAuthState(auth);
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Promotion Plans
-  const promotionPlans = [
-    { price: 49, days: 7, label: "₹49 • 7 days" },
-    { price: 99, days: 15, label: "₹99 • 15 days" },
-    { price: 199, days: 30, label: "₹199 • 30 days" },
-  ];
-
-  // Fetch logged-in user products
+  /* ---------------- FETCH PRODUCTS ---------------- */
   const fetchUserProducts = async () => {
     if (!user) return;
+    setLoading(true);
     try {
-      const q = query(collection(db, "products"), where("userId", "==", user.uid));
+      const q = query(
+        collection(db, "products"),
+        where("userId", "==", user.uid)
+      );
       const snapshot = await getDocs(q);
-      const list = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+      const list = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
       }));
       setProducts(list);
     } catch (err) {
-      console.error("Error fetching products:", err);
-      toast.error("❌ Failed to load products.");
+      console.error(err);
+      toast.error("Failed to load your products.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,197 +55,227 @@ function Dashboard() {
     fetchUserProducts();
   }, [user]);
 
-  // Delete product
-  const handleDelete = async (productId, imageURL) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+  /* ---------------- DELETE ---------------- */
+  const handleDelete = async (product) => {
+    if (!window.confirm("Delete this product permanently?")) return;
 
     try {
-      if (imageURL) {
-        const imageRef = ref(storage, imageURL);
-        await deleteObject(imageRef);
+      if (product.imageUrls?.[0]) {
+        await deleteObject(ref(storage, product.imageUrls[0]));
       }
-      await deleteDoc(doc(db, "products", productId));
-
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
-      toast.success("✅ Product deleted successfully!");
-    } catch (error) {
-      console.error("❌ Error deleting product:", error);
-      toast.error("❌ Failed to delete product.");
+      await deleteDoc(doc(db, "products", product.id));
+      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+      toast.success("Product deleted");
+    } catch {
+      toast.error("Failed to delete product");
     }
   };
 
-  // Request Featured
+  /* ---------------- FEATURE REQUEST ---------------- */
   const requestFeatured = async (productId) => {
     try {
-      const productRef = doc(db, "products", productId);
-      await updateDoc(productRef, {
+      await updateDoc(doc(db, "products", productId), {
         featuredRequest: true,
         featured: false,
       });
-      toast.success("🌟 Featured request sent! Admin will review.");
+      toast.success("Featured request sent");
       fetchUserProducts();
-    } catch (err) {
-      console.error("Error requesting featured:", err);
-      toast.error("❌ Failed to request featured.");
+    } catch {
+      toast.error("Failed to request featured");
     }
   };
 
-  // Open modal for promotion
-  const openPromotionModal = (productId) => {
-    setSelectedProduct(productId);
-    setShowModal(true);
-  };
-
-  // Confirm Promotion
+  /* ---------------- PROMOTION ---------------- */
   const confirmPromotion = async (plan) => {
-    if (!selectedProduct) return;
-
-    toast(
-      `📢 Pay ₹${plan.price} at 💳 9322264040-2@ybl\nBoost for ${plan.days} days.`,
-      { duration: 5000 }
-    );
-
     try {
       await updateDoc(doc(db, "products", selectedProduct), {
         isPromoted: true,
         promotionPlan: plan.label,
         promotionPrice: plan.price,
         promotionExpiresAt: Timestamp.fromDate(
-          new Date(Date.now() + plan.days * 24 * 60 * 60 * 1000)
+          new Date(Date.now() + plan.days * 86400000)
         ),
       });
-
-      toast.success(`🚀 Promoted for ${plan.days} days!`);
+      toast.success(`Promoted for ${plan.days} days`);
       fetchUserProducts();
+    } catch {
+      toast.error("Promotion failed");
+    } finally {
       setShowModal(false);
       setSelectedProduct(null);
-    } catch (err) {
-      console.error("Error promoting product:", err);
-      toast.error("❌ Failed to promote product.");
     }
   };
 
+  /* ================= UI ================= */
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">📦 My Dashboard</h2>
-        <p className="text-gray-600 mt-1">👤 {user?.email}</p>
-        <p className="text-gray-600">🧾 Total uploads: {products.length}</p>
+    <main className="max-w-7xl mx-auto px-4 py-6">
+      {/* HEADER */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">📦 My Dashboard</h1>
+        <p className="text-gray-600 mt-1">{user?.email}</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Total products: {products.length}
+        </p>
       </div>
 
-      {/* Product List */}
-      {products.length === 0 ? (
-        <p className="text-center text-gray-500">No products uploaded yet.</p>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+      {/* LOADING */}
+      {loading && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div
-              key={product.id}
-              className="bg-white rounded-xl shadow-md hover:shadow-lg transition flex flex-col"
-            >
-              <img
-                src={product.imageURL}
-                alt={product.productName}
-                className="h-48 w-full object-cover rounded-t-xl"
-              />
-              <div className="p-4 flex-1 flex flex-col">
-                <h5 className="text-lg font-semibold text-gray-800">
-                  {product.productName}
-                </h5>
-                <p className="text-blue-600 font-bold mt-1">₹{product.price}</p>
-                <p className="text-sm text-gray-600 mt-1">📍 {product.location}</p>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                  {product.description}
-                </p>
-
-                {/* Promotion Status */}
-                {product.isPromoted &&
-                product.promotionExpiresAt?.toDate() > new Date() ? (
-                  <span className="mt-2 inline-block text-xs px-3 py-1 bg-green-100 text-green-700 rounded-lg">
-                    🚀 Promoted till{" "}
-                    {product.promotionExpiresAt.toDate().toLocaleDateString()} (
-                    {product.promotionPlan})
-                  </span>
-                ) : (
-                  <span className="mt-2 inline-block text-xs px-3 py-1 bg-gray-100 text-gray-500 rounded-lg">
-                    Not Promoted
-                  </span>
-                )}
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <Link
-                    to={`/edit/${product.id}`}
-                    className="flex-1 px-3 py-2 text-sm bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg text-center transition"
-                  >
-                    📝 Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(product.id, product.imageURL)}
-                    className="flex-1 px-3 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
-                  >
-                    🗑️ Delete
-                  </button>
-
-                  {product.featured ? (
-                    <span className="flex-1 px-3 py-2 text-sm bg-green-500 text-white rounded-lg text-center">
-                      🌟 Featured
-                    </span>
-                  ) : product.featuredRequest ? (
-                    <span className="flex-1 px-3 py-2 text-sm bg-yellow-300 text-gray-800 rounded-lg text-center">
-                      ⏳ Pending Approval
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => requestFeatured(product.id)}
-                      className="flex-1 px-3 py-2 text-sm border border-yellow-400 text-yellow-600 hover:bg-yellow-50 rounded-lg transition"
-                    >
-                      ⭐ Request Featured
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => openPromotionModal(product.id)}
-                    className="flex-1 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-                  >
-                    🚀 Promote
-                  </button>
-                </div>
-              </div>
-            </div>
+              key={i}
+              className="h-72 bg-gray-200 rounded-xl animate-pulse"
+            />
           ))}
         </div>
       )}
 
-      {/* Promotion Modal */}
+      {/* EMPTY STATE */}
+      {!loading && products.length === 0 && (
+        <div className="text-center bg-white rounded-xl p-10 shadow-sm">
+          <div className="text-5xl mb-4">📭</div>
+          <h2 className="text-lg font-semibold">No products yet</h2>
+          <p className="text-gray-500 mt-1">
+            Start selling by adding your first product.
+          </p>
+          <Link
+            to="/add-product"
+            className="inline-block mt-5 bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700"
+          >
+            ➕ Add Product
+          </Link>
+        </div>
+      )}
+
+      {/* PRODUCTS GRID */}
+      {!loading && products.length > 0 && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => {
+            const isActivePromotion =
+              product.isPromoted &&
+              product.promotionExpiresAt?.toDate() > new Date();
+
+            return (
+              <div
+                key={product.id}
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition flex flex-col"
+              >
+                <img
+                  src={product.imageUrls?.[0] || "/placeholder.png"}
+                  alt={product.title}
+                  className="h-48 w-full object-cover rounded-t-xl"
+                />
+
+                <div className="p-4 flex flex-col flex-1">
+                  <h3 className="font-semibold line-clamp-1">
+                    {product.title}
+                  </h3>
+                  <p className="text-green-600 font-bold mt-1">
+                    ₹{product.price}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    📍 {product.location}
+                  </p>
+
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                    {product.description}
+                  </p>
+
+                  {/* STATUS */}
+                  <div className="mt-3">
+                    {isActivePromotion ? (
+                      <span className="inline-block text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                        🚀 Promoted till{" "}
+                        {product.promotionExpiresAt
+                          .toDate()
+                          .toLocaleDateString()}
+                      </span>
+                    ) : (
+                      <span className="inline-block text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">
+                        Not promoted
+                      </span>
+                    )}
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <Link
+                      to={`/edit/${product.id}`}
+                      className="text-center bg-yellow-400 hover:bg-yellow-500 text-white py-2 rounded-lg text-sm"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(product)}
+                      className="bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm"
+                    >
+                      Delete
+                    </button>
+
+                    {product.featured ? (
+                      <span className="col-span-2 text-center bg-green-500 text-white py-2 rounded-lg text-sm">
+                        🌟 Featured
+                      </span>
+                    ) : product.featuredRequest ? (
+                      <span className="col-span-2 text-center bg-yellow-200 text-gray-800 py-2 rounded-lg text-sm">
+                        ⏳ Featured pending
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => requestFeatured(product.id)}
+                        className="col-span-2 border border-yellow-400 text-yellow-600 hover:bg-yellow-50 py-2 rounded-lg text-sm"
+                      >
+                        ⭐ Request Featured
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setSelectedProduct(product.id);
+                        setShowModal(true);
+                      }}
+                      className="col-span-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm"
+                    >
+                      🚀 Promote Product
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* PROMOTION MODAL */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-80">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              🚀 Choose Promotion Plan
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-80">
+            <h3 className="font-semibold text-lg mb-4">
+              Choose Promotion Plan
             </h3>
+
             <div className="space-y-3">
-              {promotionPlans.map((plan, idx) => (
+              {promotionPlans.map((plan) => (
                 <button
-                  key={idx}
+                  key={plan.label}
                   onClick={() => confirmPromotion(plan)}
-                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg"
                 >
                   {plan.label}
                 </button>
               ))}
             </div>
+
             <button
               onClick={() => setShowModal(false)}
-              className="mt-4 w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+              className="mt-4 w-full bg-gray-200 hover:bg-gray-300 py-2 rounded-lg"
             >
-              ❌ Cancel
+              Cancel
             </button>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
