@@ -69,7 +69,30 @@ function App() {
       <Navbar />
 
       {/* Global Toaster */}
-      <Toaster position="top-right" reverseOrder={false} />
+     <Toaster
+  position="top-right"
+  reverseOrder={false}
+  gutter={8}
+  toastOptions={{
+    duration: 3000,
+    style: {
+      background: "#1f2937",
+      color: "#fff",
+    },
+    success: {
+      iconTheme: {
+        primary: "#22c55e",
+        secondary: "#fff",
+      },
+    },
+    error: {
+      iconTheme: {
+        primary: "#ef4444",
+        secondary: "#fff",
+      },
+    },
+  }}
+/>
 
       <Routes>
         {/* Public Routes */}

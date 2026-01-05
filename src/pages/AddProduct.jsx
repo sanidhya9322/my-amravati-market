@@ -12,7 +12,6 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-
 /* ================= IMAGE UPLOAD ================= */
 const uploadImages = async (files, userId) => {
   const urls = [];
@@ -174,7 +173,7 @@ const AddProduct = () => {
   /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center px-4 py-10">
-      <Toaster position="top-center" />
+
 
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-center">
