@@ -201,6 +201,46 @@ const ProductDetails = () => {
             </button>
             
           )}
+          {/* Similar Products */}
+<div className="mt-12">
+  <h3 className="text-lg font-semibold mb-4">🧭 Similar Products</h3>
+
+  {similarLoading ? (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="animate-pulse bg-white p-4 rounded-2xl shadow h-48"
+        />
+      ))}
+    </div>
+  ) : similarProducts.length > 0 ? (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {similarProducts.map(p => (
+        <motion.div
+          key={p.id}
+          whileHover={{ scale: 1.02 }}
+          className="bg-white rounded-2xl shadow p-3"
+        >
+          <Link to={`/product/${p.id}`}>
+            <img
+              src={p.imageUrls?.[0] || p.imageUrl}
+              className="w-full h-36 object-cover rounded-xl"
+              alt={p.title}
+            />
+            <h4 className="text-sm font-semibold mt-2 line-clamp-2">
+              {p.title}
+            </h4>
+            <p className="text-sm text-green-600 font-bold">₹{p.price}</p>
+            <p className="text-xs text-gray-500">📌 {p.location}</p>
+          </Link>
+        </motion.div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-sm text-gray-600">No similar products found.</p>
+  )}
+</div>
         </div>
       </div>
     </motion.div>
