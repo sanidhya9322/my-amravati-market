@@ -24,7 +24,7 @@ import ProductCard from "../components/ProductCard";
 import FiltersPanel from "../components/FiltersPanel";
 import { debounce } from "../utils/debounce";
 import { IconFilter } from "../icons/IconFilter";
-
+import { where } from "firebase/firestore";
 const PAGE_SIZE = 24;
 
 const Browse = () => {
@@ -45,39 +45,45 @@ const Browse = () => {
   const loadMoreRef = useRef(null);
 
   /* -------------------- FETCH -------------------- */
-  const fetchPage = useCallback(async (startAfterDoc = null) => {
-    setLoading(true);
-    try {
-      const productsRef = collection(db, "products");
-      let q = query(
+const fetchPage = useCallback(async (startAfterDoc = null) => {
+  setLoading(true);
+  try {
+    const productsRef = collection(db, "products");
+
+    let q = query(
+      productsRef,
+      where("approved", "==", true), // ✅ MAIN FIX
+      orderBy("createdAt", "desc"),
+      limit(PAGE_SIZE)
+    );
+
+    if (startAfterDoc) {
+      q = query(
         productsRef,
+        where("approved", "==", true), // ✅ SAME FILTER HERE
         orderBy("createdAt", "desc"),
+        startAfter(startAfterDoc),
         limit(PAGE_SIZE)
       );
-
-      if (startAfterDoc) {
-        q = query(
-          productsRef,
-          orderBy("createdAt", "desc"),
-          startAfter(startAfterDoc),
-          limit(PAGE_SIZE)
-        );
-      }
-
-      const snapshot = await getDocs(q);
-      const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-
-      setProducts((prev) =>
-        startAfterDoc ? [...prev, ...docs] : docs
-      );
-      setLastDoc(snapshot.docs.at(-1) || null);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
-    } catch (err) {
-      console.error("Browse fetch error:", err);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+
+    const snapshot = await getDocs(q);
+    const docs = snapshot.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+
+    setProducts((prev) =>
+      startAfterDoc ? [...prev, ...docs] : docs
+    );
+    setLastDoc(snapshot.docs.at(-1) || null);
+    setHasMore(snapshot.docs.length === PAGE_SIZE);
+  } catch (err) {
+    console.error("Browse fetch error:", err);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   /* -------------------- INITIAL LOAD -------------------- */
   useEffect(() => {

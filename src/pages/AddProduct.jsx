@@ -94,81 +94,82 @@ const AddProduct = () => {
 
   /* ===== SUBMIT ===== */
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!auth.currentUser) {
-      toast.error("Please login first");
-      return;
-    }
+  if (!auth.currentUser) {
+    toast.error("Please login first");
+    return;
+  }
 
-    if (!formData.title || !formData.description || !formData.price) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+  if (!formData.title || !formData.description || !formData.price) {
+    toast.error("Please fill all required fields");
+    return;
+  }
 
-    if (images.length === 0) {
-      toast.error("Please upload at least one image");
-      return;
-    }
+  if (images.length === 0) {
+    toast.error("Please upload at least one image");
+    return;
+  }
 
-    setUploading(true);
+  setUploading(true);
 
-    try {
-      /* 🔥 FIXED DAILY LIMIT LOGIC */
-      const q = query(
-        collection(db, "products"),
-        where("userId", "==", auth.currentUser.uid)
-      );
-      const snap = await getDocs(q);
+  try {
+    /* 🔥 DAILY LIMIT CHECK */
+    const q = query(
+      collection(db, "products"),
+      where("userId", "==", auth.currentUser.uid)
+    );
+    const snap = await getDocs(q);
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      const todayCount = snap.docs.filter((d) => {
-        const created = d.data().createdAt?.toDate?.();
-        return created && created >= today;
-      }).length;
+    const todayCount = snap.docs.filter((d) => {
+      const created = d.data().createdAt?.toDate?.();
+      return created && created >= today;
+    }).length;
 
-      if (todayCount >= DAILY_LIMIT) {
-        toast.error("Daily limit reached (3 products per day)");
-        setUploading(false);
-        return;
-      }
-
-      /* 🔥 IMAGE UPLOAD */
-      const imageUrls = await uploadImages(images, auth.currentUser.uid);
-
-      /* 🔥 SAVE PRODUCT */
-      await addDoc(collection(db, "products"), {
-        title: formData.title,
-        description: formData.description,
-        price: Number(formData.price),
-        category: formData.category,
-        location: formData.location,
-        sellerPhone: formData.sellerPhone || null,
-
-        imageUrls,
-        userId: auth.currentUser.uid,
-        userEmail: auth.currentUser.email,
-
-        approved: false,
-        promoted: false,
-
-        createdAt: serverTimestamp(),
-        createdAtClient: Timestamp.now(),
-      });
-
-      toast.success("Product added successfully 🎉");
-      previewURLs.forEach(URL.revokeObjectURL);
-
-      setTimeout(() => navigate("/dashboard"), 1500);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to add product. Try again.");
-    } finally {
+    if (todayCount >= DAILY_LIMIT) {
+      toast.error("Daily limit reached (3 products per day)");
       setUploading(false);
+      return;
     }
-  };
+
+    /* 🔥 IMAGE UPLOAD */
+    const imageUrls = await uploadImages(images, auth.currentUser.uid);
+
+    /* 🔥 SAVE PRODUCT (ADMIN SAFE) */
+    await addDoc(collection(db, "products"), {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      price: parseFloat(formData.price),
+      category: formData.category,
+      location: formData.location,
+      sellerPhone: formData.sellerPhone || null,
+
+      imageUrls,
+
+      userId: auth.currentUser.uid,
+      userEmail: auth.currentUser.email,
+
+      approved: false,              // 🔴 VERY IMPORTANT
+      promoted: false,
+      promotionExpiresAt: null,
+
+      createdAt: serverTimestamp(),
+      createdAtClient: Timestamp.now(),
+    });
+
+    toast.success("Product added successfully 🎉");
+    previewURLs.forEach(URL.revokeObjectURL);
+    navigate("/dashboard");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to add product. Try again.");
+  } finally {
+    setUploading(false);
+  }
+};
 
   /* ================= UI ================= */
   return (
