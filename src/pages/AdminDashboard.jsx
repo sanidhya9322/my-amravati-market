@@ -3,29 +3,64 @@ import AdminSidebar from "../components/AdminSidebar";
 import AdminProducts from "./AdminProducts";
 import AdminUsers from "./AdminUsers";
 import AdminOrders from "./AdminOrders";
-import { db } from "../firebase/firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import AdminAnalytics from "./AdminAnalytics";
+import AdminSellerReport from "./AdminSellerReport";
+
+import { db, auth } from "../firebase/firebaseConfig";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import {
   Package,
   User,
   ShoppingCart,
-  BarChart3,
-  AlertTriangle,
 } from "lucide-react";
 
+/* ===============================
+   ADMIN DASHBOARD (PROTECTED)
+================================ */
 const AdminDashboard = () => {
+  const [role, setRole] = useState(null); // ✅ real role
+  const [checkingRole, setCheckingRole] = useState(true);
+
   const [activeTab, setActiveTab] = useState("dashboard");
+
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalUsers: 0,
     totalOrders: 0,
   });
+
   const [loadingStats, setLoadingStats] = useState(true);
+
+  /* ================= ROLE CHECK ================= */
+  useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          setRole("guest");
+          return;
+        }
+
+        const snap = await getDoc(doc(db, "users", user.uid));
+        setRole(snap.exists() ? snap.data().role : "user");
+      } catch (err) {
+        console.error("Role fetch failed:", err);
+        setRole("user");
+      } finally {
+        setCheckingRole(false);
+      }
+    };
+
+    checkRole();
+  }, []);
 
   /* ================= FETCH STATS ================= */
   useEffect(() => {
+    if (role !== "admin") return;
+
     const fetchStats = async () => {
       try {
+        setLoadingStats(true);
         const [productsSnap, usersSnap, ordersSnap] = await Promise.all([
           getDocs(collection(db, "products")),
           getDocs(collection(db, "users")),
@@ -45,7 +80,25 @@ const AdminDashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [role]);
+
+  /* ================= LOADING ================= */
+  if (checkingRole) {
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-500">
+        ⏳ Verifying admin access...
+      </div>
+    );
+  }
+
+  /* ================= ACCESS DENIED ================= */
+  if (role !== "admin") {
+    return (
+      <div className="h-screen flex items-center justify-center text-red-600 font-semibold">
+        🚫 Access Denied — Admins only
+      </div>
+    );
+  }
 
   /* ================= TAB RENDER ================= */
   const renderTab = () => {
@@ -59,19 +112,11 @@ const AdminDashboard = () => {
       case "orders":
         return <AdminOrders />;
       case "analytics":
-        return (
-          <div className="bg-white p-6 rounded-xl shadow text-gray-600">
-            📊 Analytics page coming soon
-          </div>
-        );
+        return <AdminAnalytics />;
       case "seller-report":
-        return (
-          <div className="bg-white p-6 rounded-xl shadow text-gray-600">
-            🚨 Seller reports page coming soon
-          </div>
-        );
+        return <AdminSellerReport />;
       default:
-        return <AdminProducts />;
+        return renderOverview();
     }
   };
 
@@ -83,7 +128,10 @@ const AdminDashboard = () => {
       </h1>
 
       {loadingStats ? (
-        <p className="text-gray-500">Loading statistics…</p>
+        <div className="flex items-center gap-2 text-gray-500">
+          <div className="animate-spin h-5 w-5 border-2 border-indigo-500 border-t-transparent rounded-full" />
+          Loading statistics...
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
@@ -109,6 +157,7 @@ const AdminDashboard = () => {
     </>
   );
 
+  /* ================= UI ================= */
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar
