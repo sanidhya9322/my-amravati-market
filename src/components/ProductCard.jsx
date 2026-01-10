@@ -19,12 +19,15 @@ const ProductCard = ({ product, onToggleFavorite }) => {
     price,
     location,
     promoted,
-    isFavorite,
+    isFavorite = false, // 🔴 default false (important)
   } = product;
 
   const imageSrc = getImageUrl(product);
   const displayTitle = title || "Untitled product";
-  const displayPrice = price ? formatPrice(price) : "Price not set";
+  const displayPrice =
+    price !== undefined && price !== null
+      ? formatPrice(price)
+      : "Price not set";
 
   return (
     <motion.article
@@ -34,9 +37,9 @@ const ProductCard = ({ product, onToggleFavorite }) => {
       whileHover={{ scale: 1.01 }}
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden"
     >
-      {/* Image + overlays */}
+      {/* IMAGE SECTION */}
       <div className="relative">
-        {/* Promoted badge */}
+        {/* PROMOTED BADGE */}
         {promoted && (
           <span className="absolute top-2 left-2 z-10 flex items-center gap-1 text-xs bg-yellow-300 px-2 py-1 rounded-full font-medium shadow-sm">
             <StarIcon size={12} />
@@ -44,18 +47,21 @@ const ProductCard = ({ product, onToggleFavorite }) => {
           </span>
         )}
 
-        {/* Favorite button */}
+        {/* ❤️ FAVORITE BUTTON */}
         <button
+          type="button"
           onClick={(e) => {
             e.preventDefault();
-            onToggleFavorite(product);
+            e.stopPropagation(); // 🔥 VERY IMPORTANT
+            onToggleFavorite(id); // ✅ ONLY productId
           }}
-          aria-label="Add to favorites"
+          aria-label="Toggle wishlist"
           className="absolute top-2 right-2 z-10 p-2 bg-white/90 rounded-full shadow hover:bg-white transition"
         >
           <HeartIcon filled={isFavorite} size={18} />
         </button>
 
+        {/* IMAGE */}
         <Link to={`/product/${id}`}>
           <div className="w-full aspect-[4/3] bg-gray-100">
             <img
@@ -68,7 +74,7 @@ const ProductCard = ({ product, onToggleFavorite }) => {
         </Link>
       </div>
 
-      {/* Content */}
+      {/* CONTENT */}
       <Link to={`/product/${id}`} className="block p-3">
         <div className="text-base font-bold text-green-600">
           {displayPrice}

@@ -158,31 +158,51 @@ const Navbar = () => {
               Sell
             </Link>
 
-            {user && (
-              <>
-                <Link to="/messages" onClick={() => setMenuOpen(false)} className="px-4 py-3">
-                  Messages {unreadCount > 0 && `(${unreadCount})`}
-                </Link>
+          {user && (
+  <>
+    <Link
+      to="/messages"
+      onClick={() => setMenuOpen(false)}
+      className="px-4 py-3"
+    >
+      Messages {unreadCount > 0 && `(${unreadCount})`}
+    </Link>
 
-                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="px-4 py-3">
-                  Dashboard
-                </Link>
+    {/* ✅ WISHLIST ADDED (FIXED) */}
+    <Link
+      to="/favorites"
+      onClick={() => setMenuOpen(false)}
+      className="px-4 py-3"
+    >
+      Wishlist
+    </Link>
 
-                {role === "admin" && (
-                  <Link to="/admin" onClick={() => setMenuOpen(false)} className="px-4 py-3">
-                    Admin
-                  </Link>
-                )}
+    <Link
+      to="/dashboard"
+      onClick={() => setMenuOpen(false)}
+      className="px-4 py-3"
+    >
+      Dashboard
+    </Link>
 
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-3 text-left text-red-600"
-                >
-                  Logout
-                </button>
-              </>
-            )}
+    {role === "admin" && (
+      <Link
+        to="/admin"
+        onClick={() => setMenuOpen(false)}
+        className="px-4 py-3"
+      >
+        Admin
+      </Link>
+    )}
 
+    <button
+      onClick={handleLogout}
+      className="px-4 py-3 text-left text-red-600"
+    >
+      Logout
+    </button>
+  </>
+)}
             {!user && (
               <>
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="px-4 py-3">

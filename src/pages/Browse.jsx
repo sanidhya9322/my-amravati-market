@@ -12,19 +12,17 @@ import {
   getDocs,
   limit,
   startAfter,
-  doc,
-  setDoc,
-  deleteDoc,
-  getDoc,
-  serverTimestamp,
+  where, // Combined imports for cleaner code
 } from "firebase/firestore";
 import { Link, useSearchParams } from "react-router-dom";
-import { db, auth } from "../firebase/firebaseConfig";
+import { db } from "../firebase/firebaseConfig"; // Removed auth import as it is likely handled inside utils/favorites
 import ProductCard from "../components/ProductCard";
 import FiltersPanel from "../components/FiltersPanel";
 import { debounce } from "../utils/debounce";
 import { IconFilter } from "../icons/IconFilter";
-import { where } from "firebase/firestore";
+// ✅ 1. Import is already here
+import { toggleFavorite } from "../utils/favorites";
+
 const PAGE_SIZE = 24;
 
 const Browse = () => {
@@ -45,45 +43,43 @@ const Browse = () => {
   const loadMoreRef = useRef(null);
 
   /* -------------------- FETCH -------------------- */
-const fetchPage = useCallback(async (startAfterDoc = null) => {
-  setLoading(true);
-  try {
-    const productsRef = collection(db, "products");
+  const fetchPage = useCallback(async (startAfterDoc = null) => {
+    setLoading(true);
+    try {
+      const productsRef = collection(db, "products");
 
-    let q = query(
-      productsRef,
-      where("approved", "==", true), // ✅ MAIN FIX
-      orderBy("createdAt", "desc"),
-      limit(PAGE_SIZE)
-    );
-
-    if (startAfterDoc) {
-      q = query(
+      let q = query(
         productsRef,
-        where("approved", "==", true), // ✅ SAME FILTER HERE
+        where("approved", "==", true),
         orderBy("createdAt", "desc"),
-        startAfter(startAfterDoc),
         limit(PAGE_SIZE)
       );
+
+      if (startAfterDoc) {
+        q = query(
+          productsRef,
+          where("approved", "==", true),
+          orderBy("createdAt", "desc"),
+          startAfter(startAfterDoc),
+          limit(PAGE_SIZE)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+      const docs = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      setProducts((prev) => (startAfterDoc ? [...prev, ...docs] : docs));
+      setLastDoc(snapshot.docs.at(-1) || null);
+      setHasMore(snapshot.docs.length === PAGE_SIZE);
+    } catch (err) {
+      console.error("Browse fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-
-    const snapshot = await getDocs(q);
-    const docs = snapshot.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-
-    setProducts((prev) =>
-      startAfterDoc ? [...prev, ...docs] : docs
-    );
-    setLastDoc(snapshot.docs.at(-1) || null);
-    setHasMore(snapshot.docs.length === PAGE_SIZE);
-  } catch (err) {
-    console.error("Browse fetch error:", err);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+  }, []);
 
   /* -------------------- INITIAL LOAD -------------------- */
   useEffect(() => {
@@ -160,23 +156,21 @@ const fetchPage = useCallback(async (startAfterDoc = null) => {
   }, [hasMore, loading, lastDoc, fetchPage]);
 
   /* -------------------- FAVORITES -------------------- */
-  const handleAddToFavorites = async (product) => {
-    const user = auth.currentUser;
-    if (!user) return alert("Please login to save favorites");
+  
+  // ✅ 2. New Handler added here
+  const handleToggleFavorite = async (productId) => {
+    try {
+      // Call the utility function
+      const isNowFavorite = await toggleFavorite(productId);
 
-    const favRef = doc(db, "users", user.uid, "favorites", product.id);
-    const snap = await getDoc(favRef);
-
-    if (snap.exists()) {
-      await deleteDoc(favRef);
-    } else {
-      await setDoc(favRef, {
-        productId: product.id,
-        title: product.title,
-        imageUrl: product.imageUrls?.[0] || "",
-        price: product.price || 0,
-        createdAt: serverTimestamp(),
-      });
+      // Update local state immediately to reflect change (Optimistic UI update)
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId ? { ...p, isFavorite: isNowFavorite } : p
+        )
+      );
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
     }
   };
 
@@ -265,10 +259,14 @@ const fetchPage = useCallback(async (startAfterDoc = null) => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {filteredProducts.map((p) => (
+                // ✅ 3. Updated ProductCard to use new handler
                 <ProductCard
                   key={p.id}
                   product={p}
-                  onToggleFavorite={() => handleAddToFavorites(p)}
+                  // We pass the function definition. 
+                  // Ensure your ProductCard calls onToggleFavorite(product.id)
+                  // OR change this line to: () => handleToggleFavorite(p.id)
+                  onToggleFavorite={() => handleToggleFavorite(p.id)}
                 />
               ))}
 
