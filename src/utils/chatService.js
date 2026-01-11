@@ -139,9 +139,10 @@ export const listenToConversations = (userId, callback) => {
   const conversationsRef = collection(db, "conversations");
 
   const q = query(
-    conversationsRef,
-    where("participants", "array-contains", userId)
-  );
+  conversationsRef,
+  where("participants", "array-contains", userId),
+  orderBy("lastMessageAt", "desc")
+);
 
   return onSnapshot(q, (snapshot) => {
     const chats = snapshot.docs.map((doc) => ({
