@@ -31,6 +31,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Hooks
 import useLenis from "./hooks/useLenis";
@@ -63,36 +64,38 @@ function App() {
 
   return (
     <Router>
+      {/* ✅ FIX: Scroll reset on every route change */}
+      <ScrollToTop />
+
       <PageTrackingWrapper />
 
       {/* Global Navbar */}
       <Navbar />
 
-      {/* Global Toaster */}
-     <Toaster
-  position="top-right"
-  reverseOrder={false}
-  gutter={8}
-  toastOptions={{
-    duration: 3000,
-    style: {
-      background: "#1f2937",
-      color: "#fff",
-    },
-    success: {
-      iconTheme: {
-        primary: "#22c55e",
-        secondary: "#fff",
-      },
-    },
-    error: {
-      iconTheme: {
-        primary: "#ef4444",
-        secondary: "#fff",
-      },
-    },
-  }}
-/>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#1f2937",
+            color: "#fff",
+          },
+          success: {
+            iconTheme: {
+              primary: "#22c55e",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
 
       <Routes>
         {/* Public Routes */}
