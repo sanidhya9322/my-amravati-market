@@ -1,40 +1,101 @@
-// ✅ New Product Notification: Match any preferred location or category
-exports.notifyUsersOnNewProduct = onDocumentCreated("products/{productId}", async (event) => {
-  const product = event.data.data();
-  const productLocation = product.location;
-  const productCategory = product.category;
+// 🔔 Product Approved → Create Notifications (NO EMAIL / NO PUSH)
+exports.notifyUsersOnProductApproval = onDocumentUpdated(
+  "products/{productId}",
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const productId = event.params.productId;
 
-  const userSnapshot = await admin.firestore().collection("users").get();
+    // ✅ 1️⃣ Only when approved changes from false → true
+    if (before.approved === true || after.approved !== true) {
+      console.log("Not a fresh approval, skipping notification");
+      return;
+    }
 
-  const matchingUsers = userSnapshot.docs.filter((doc) => {
-    const user = doc.data();
-    const preferredLocations = user.preferredLocations || [];  // ✅ Array
-    const preferredCategories = user.preferredCategories || []; // ✅ Array
+    console.log("Product approved, creating notifications");
 
-    const locationMatch = preferredLocations.includes(productLocation);
-    const categoryMatch = preferredCategories.includes(productCategory);
+    const productLocation = after.location;
+    const productCategory = after.category;
 
-    return locationMatch && categoryMatch;
-  });
+    const usersSnap = await admin.firestore().collection("users").get();
 
-  const emailPromises = matchingUsers.map((doc) => {
-    const user = doc.data();
-    return transporter.sendMail({
-      from: '"MyAmravati Market" <YOUR_EMAIL@gmail.com>',
-      to: user.email,
-      subject: "🆕 New Product in Your Area & Interest!",
-      html: `
-        <p>Hello!</p>
-        <p>A new product <strong>${product.title}</strong> was just listed:</p>
-        <ul>
-          <li>📍 Location: ${productLocation}</li>
-          <li>🛍️ Category: ${productCategory}</li>
-        </ul>
-        <a href="https://myamravati-market.netlify.app/product/${event.params.productId}">👉 View Product</a>
-        <p>Thank you for using MyAmravati Market 💚</p>
-      `,
+    const batch = admin.firestore().batch();
+    let notificationCount = 0;
+
+    usersSnap.docs.forEach((doc) => {
+      const user = doc.data();
+
+      const preferredLocations = user.preferredLocations || [];
+      const preferredCategories = user.preferredCategories || [];
+
+      const locationMatch = preferredLocations.includes(productLocation);
+      const categoryMatch = preferredCategories.includes(productCategory);
+
+      // ✅ Location + Category match
+      if (locationMatch && categoryMatch) {
+        const notifRef = admin.firestore().collection("notifications").doc();
+
+        batch.set(notifRef, {
+          userId: doc.id,
+          productId,
+          type: "new_product",
+          title: "🆕 New product near you",
+          body: after.title,
+          read: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        notificationCount++;
+      }
     });
-  });
 
-  return Promise.all(emailPromises);
-});
+    if (notificationCount > 0) {
+      await batch.commit();
+    }
+
+    console.log(`✅ ${notificationCount} notifications created`);
+  }
+);
+// 🔔 MESSAGE NOTIFICATION (Buyer ↔ Seller)
+exports.notifyOnNewMessage = onDocumentCreated(
+  "conversations/{conversationId}/messages/{messageId}",
+  async (event) => {
+    const message = event.data.data();
+    const { conversationId } = event.params;
+
+    if (!message || !message.senderId) return;
+
+    const convoRef = admin
+      .firestore()
+      .collection("conversations")
+      .doc(conversationId);
+
+    const convoSnap = await convoRef.get();
+    if (!convoSnap.exists) return;
+
+    const convo = convoSnap.data();
+
+    // 🔍 Decide receiver
+    const receiverId =
+      message.senderId === convo.buyerId
+        ? convo.sellerId
+        : convo.buyerId;
+
+    // 🛑 Safety
+    if (!receiverId) return;
+
+    // 🔔 Create notification
+    await admin.firestore().collection("notifications").add({
+      userId: receiverId,
+      type: "message",
+      title: "💬 New message",
+      body: message.text?.slice(0, 80) || "New message received",
+      conversationId,
+      senderId: message.senderId,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    console.log("Message notification sent to", receiverId);
+  }
+);

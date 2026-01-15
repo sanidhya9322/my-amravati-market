@@ -13,6 +13,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
+import { createNotification } from "./notificationService";
 
 /**
  * 1️⃣ Get or Create Conversation
@@ -67,7 +68,7 @@ export const getOrCreateConversation = async ({
 };
 
 /**
- * 2️⃣ Send Message (with unread + safety)
+ * 2️⃣ Send Message (with unread + notification)
  */
 export const sendMessage = async (conversationId, senderId, text) => {
   if (!text || !text.trim()) return;
@@ -80,7 +81,7 @@ export const sendMessage = async (conversationId, senderId, text) => {
     "messages"
   );
 
-  // 🔐 Fetch conversation first (block check)
+  // 🔐 Fetch conversation first
   const convoSnap = await getDoc(conversationRef);
   if (!convoSnap.exists()) return;
 
@@ -101,12 +102,22 @@ export const sendMessage = async (conversationId, senderId, text) => {
 
   const isBuyer = senderId === convo.buyerId;
 
-  // 2️⃣ Update conversation metadata
+  // 2️⃣ Update conversation metadata (THIS triggers inbox realtime)
   await updateDoc(conversationRef, {
     lastMessage: text,
     lastMessageAt: serverTimestamp(),
     buyerUnread: isBuyer ? 0 : increment(1),
     sellerUnread: isBuyer ? increment(1) : 0,
+  });
+
+  // 3️⃣ 🔔 CREATE NOTIFICATION FOR RECEIVER
+  const receiverId = isBuyer ? convo.sellerId : convo.buyerId;
+
+  await createNotification(receiverId, {
+    title: "New message",
+    message: text.length > 60 ? text.slice(0, 60) + "…" : text,
+    type: "chat",
+    link: `/messages/${conversationId}`,
   });
 };
 

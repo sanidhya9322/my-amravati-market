@@ -4,6 +4,11 @@ import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { listenToConversations } from "../utils/chatService";
+import NotificationBell from "../components/NotificationBell";
+// ✅ ADDED IMPORTS
+import { requestPermissionAndToken } from "../firebase/messaging";
+import { saveFcmToken } from "../utils/saveFcmToken";
+
 
 const Navbar = () => {
   const [user, setUser] = useState(null);
@@ -39,6 +44,17 @@ const Navbar = () => {
     return () => unsubscribe();
   }, []);
 
+  // ✅ ADDED: FCM Token Management
+  useEffect(() => {
+  if (user?.uid) {
+    requestPermissionAndToken().then((token) => {
+      if (token) {
+        saveFcmToken(user.uid, token);
+      }
+    });
+  }
+}, [user]);
+
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
@@ -73,19 +89,26 @@ const Navbar = () => {
         {/* Right section */}
         <div className="flex items-center gap-4">
 
-          {/* Messages (desktop only) */}
           {user && (
-            <Link
-              to="/messages"
-              className="relative text-sm hover:text-blue-600 hidden sm:block"
-            >
-              Messages
-              {unreadCount > 0 && (
-                <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs px-1.5 rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </Link>
+            <>
+              {/* Messages (desktop only) */}
+              <Link
+                to="/messages"
+                className="relative text-sm hover:text-blue-600 hidden sm:block"
+              >
+                Messages
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs px-1.5 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Notification Bell */}
+              <div className="flex items-center">
+                <NotificationBell />
+              </div>
+            </>
           )}
 
           {/* User dropdown (desktop only) */}
@@ -149,60 +172,38 @@ const Navbar = () => {
       {menuOpen && (
         <div className="sm:hidden bg-white border-t">
           <div className="flex flex-col text-sm divide-y">
-
             <Link to="/browse" onClick={() => setMenuOpen(false)} className="px-4 py-3">
               Browse
             </Link>
-
             <Link to="/add-product" onClick={() => setMenuOpen(false)} className="px-4 py-3">
               Sell
             </Link>
 
-          {user && (
-  <>
-    <Link
-      to="/messages"
-      onClick={() => setMenuOpen(false)}
-      className="px-4 py-3"
-    >
-      Messages {unreadCount > 0 && `(${unreadCount})`}
-    </Link>
+            {user && (
+              <>
+                <Link to="/messages" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+                  Messages {unreadCount > 0 && `(${unreadCount})`}
+                </Link>
+                <Link to="/favorites" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+                  Wishlist
+                </Link>
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+                  Dashboard
+                </Link>
+                {role === "admin" && (
+                  <Link to="/admin" onClick={() => setMenuOpen(false)} className="px-4 py-3">
+                    Admin
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-3 text-left text-red-600"
+                >
+                  Logout
+                </button>
+              </>
+            )}
 
-    {/* ✅ WISHLIST ADDED (FIXED) */}
-    <Link
-      to="/favorites"
-      onClick={() => setMenuOpen(false)}
-      className="px-4 py-3"
-    >
-      Wishlist
-    </Link>
-
-    <Link
-      to="/dashboard"
-      onClick={() => setMenuOpen(false)}
-      className="px-4 py-3"
-    >
-      Dashboard
-    </Link>
-
-    {role === "admin" && (
-      <Link
-        to="/admin"
-        onClick={() => setMenuOpen(false)}
-        className="px-4 py-3"
-      >
-        Admin
-      </Link>
-    )}
-
-    <button
-      onClick={handleLogout}
-      className="px-4 py-3 text-left text-red-600"
-    >
-      Logout
-    </button>
-  </>
-)}
             {!user && (
               <>
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="px-4 py-3">

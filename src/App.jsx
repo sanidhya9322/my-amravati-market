@@ -1,7 +1,7 @@
 // -------------------------------------------
-// App.jsx (Clean, Fixed & Production-Ready)
+// App.jsx (Updated with Firebase Messaging)
 // -------------------------------------------
-import React from "react";
+import React, { useEffect } from "react"; // ✅ Added useEffect
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Pages
@@ -41,7 +41,10 @@ import usePageTracking from "./hooks/usePageTracking";
 import ReactGA from "react-ga4";
 
 // Toast
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast"; // ✅ Added toast (Default import)
+
+// Firebase Messaging
+import { onForegroundMessage } from "./firebase/messaging"; // ✅ Added Firebase Import
 
 // -------------------------------------------
 // Initialize GA (once)
@@ -62,9 +65,27 @@ function PageTrackingWrapper() {
 function App() {
   useLenis();
 
+  // ✅ Firebase Foreground Message Listener
+  useEffect(() => {
+    onForegroundMessage((payload) => {
+      // Customize the toast appearance here if desired
+      toast(
+        `${payload.notification.title}: ${payload.notification.body}`,
+        {
+          icon: "🔔", // Optional: Add an icon
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
+    });
+  }, []);
+
   return (
     <Router>
-      {/* ✅ FIX: Scroll reset on every route change */}
+      {/* Scroll reset on every route change */}
       <ScrollToTop />
 
       <PageTrackingWrapper />
