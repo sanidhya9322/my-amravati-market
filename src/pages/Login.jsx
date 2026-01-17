@@ -148,7 +148,7 @@ function Login() {
             className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
           >
             <img
-              src="https://www.svgrepo.com/show/303145/facebook-icon-logo.svg"
+              src="https://www.vectorlogo.zone/logos/facebook/facebook-official.svg"  
               alt="Facebook"
               className="w-5 h-5 mr-2"
             />

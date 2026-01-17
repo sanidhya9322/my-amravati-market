@@ -15,10 +15,9 @@ import {
 import { db } from "../firebase/firebaseConfig";
 import { createNotification } from "./notificationService";
 
-/**
- * 1️⃣ Get or Create Conversation
- * 1 buyer + 1 seller + 1 product = 1 thread
- */
+/* ======================================================
+   1️⃣ Get or Create Conversation
+====================================================== */
 export const getOrCreateConversation = async ({
   productId,
   productTitle,
@@ -60,6 +59,9 @@ export const getOrCreateConversation = async ({
     buyerUnread: 0,
     sellerUnread: 0,
 
+    buyerTyping: false,
+    sellerTyping: false,
+
     createdAt: serverTimestamp(),
     isBlocked: false,
   });
@@ -67,9 +69,9 @@ export const getOrCreateConversation = async ({
   return docRef.id;
 };
 
-/**
- * 2️⃣ Send Message (with unread + notification)
- */
+/* ======================================================
+   2️⃣ Send Message (SAFE + STATUS READY)
+====================================================== */
 export const sendMessage = async (conversationId, senderId, text) => {
   if (!text || !text.trim()) return;
 
@@ -81,36 +83,37 @@ export const sendMessage = async (conversationId, senderId, text) => {
     "messages"
   );
 
-  // 🔐 Fetch conversation first
   const convoSnap = await getDoc(conversationRef);
   if (!convoSnap.exists()) return;
 
   const convo = convoSnap.data();
+  if (convo.isBlocked) throw new Error("Conversation blocked");
 
-  if (convo.isBlocked) {
-    throw new Error("Conversation is blocked");
-  }
+  const isBuyer = senderId === convo.buyerId;
 
-  // 1️⃣ Add message
+  // 1️⃣ Add message with delivery state
   await addDoc(messagesRef, {
     senderId,
-    text,
+    text: text.trim(),
     createdAt: serverTimestamp(),
+    status: "sent", // sent → seen later
     type: "text",
     isDeleted: false,
   });
 
-  const isBuyer = senderId === convo.buyerId;
-
-  // 2️⃣ Update conversation metadata (THIS triggers inbox realtime)
+  // 2️⃣ Update conversation metadata
   await updateDoc(conversationRef, {
-    lastMessage: text,
+    lastMessage: text.trim(),
     lastMessageAt: serverTimestamp(),
+
     buyerUnread: isBuyer ? 0 : increment(1),
     sellerUnread: isBuyer ? increment(1) : 0,
+
+    buyerTyping: false,
+    sellerTyping: false,
   });
 
-  // 3️⃣ 🔔 CREATE NOTIFICATION FOR RECEIVER
+  // 3️⃣ Notification
   const receiverId = isBuyer ? convo.sellerId : convo.buyerId;
 
   await createNotification(receiverId, {
@@ -121,9 +124,9 @@ export const sendMessage = async (conversationId, senderId, text) => {
   });
 };
 
-/**
- * 3️⃣ Listen to Messages (Realtime)
- */
+/* ======================================================
+   3️⃣ Listen to Messages (Realtime)
+====================================================== */
 export const listenToMessages = (conversationId, callback) => {
   const messagesRef = collection(
     db,
@@ -135,25 +138,25 @@ export const listenToMessages = (conversationId, callback) => {
   const q = query(messagesRef, orderBy("createdAt", "asc"));
 
   return onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    const messages = snapshot.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
     }));
     callback(messages);
   });
 };
 
-/**
- * 4️⃣ Listen to Inbox Conversations
- */
+/* ======================================================
+   4️⃣ Listen to Inbox Conversations
+====================================================== */
 export const listenToConversations = (userId, callback) => {
   const conversationsRef = collection(db, "conversations");
 
   const q = query(
-  conversationsRef,
-  where("participants", "array-contains", userId),
-  orderBy("lastMessageAt", "desc")
-);
+    conversationsRef,
+    where("participants", "array-contains", userId),
+    orderBy("lastMessageAt", "desc")
+  );
 
   return onSnapshot(q, (snapshot) => {
     const chats = snapshot.docs.map((doc) => ({
@@ -162,4 +165,68 @@ export const listenToConversations = (userId, callback) => {
     }));
     callback(chats);
   });
+};
+
+/* ======================================================
+   5️⃣ Typing Indicator Helpers (NEW)
+====================================================== */
+export const setTypingStatus = async (
+  conversationId,
+  userId,
+  isTyping
+) => {
+  const convoRef = doc(db, "conversations", conversationId);
+  const snap = await getDoc(convoRef);
+  if (!snap.exists()) return;
+
+  const convo = snap.data();
+
+  if (userId === convo.buyerId) {
+    await updateDoc(convoRef, { buyerTyping: isTyping });
+  } else if (userId === convo.sellerId) {
+    await updateDoc(convoRef, { sellerTyping: isTyping });
+  }
+};
+// DELETE FOR ME
+export const deleteMessageForMe = async (
+  conversationId,
+  messageId,
+  userId
+) => {
+  const ref = doc(
+    db,
+    "conversations",
+    conversationId,
+    "messages",
+    messageId
+  );
+
+  await updateDoc(ref, {
+    isDeleted: true,
+    deletedFor: "me",
+    deletedBy: userId,
+    deletedAt: serverTimestamp(),
+  });
+};
+
+// UPDATED DELETE FOR EVERYONE (With sender check)
+export const deleteMessageForEveryone = async (
+  conversationId,
+  messageId,
+  userId
+) => {
+  const ref = doc(db, "conversations", conversationId, "messages", messageId);
+  const snap = await getDoc(ref);
+
+  // Security: Only allow sender to delete for everyone
+  if (snap.exists() && snap.data().senderId === userId) {
+    await updateDoc(ref, {
+      isDeleted: true,
+      deletedFor: "everyone",
+      deletedBy: userId,
+      deletedAt: serverTimestamp(),
+    });
+  } else {
+    console.error("Unauthorized: You can only delete your own messages for everyone.");
+  }
 };
