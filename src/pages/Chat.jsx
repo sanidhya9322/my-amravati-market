@@ -14,14 +14,12 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  /* 🔹 STEP 4A: Long Press States */
   const [longPressedMsg, setLongPressedMsg] = useState(null);
   const pressTimer = useRef(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  /* 🔹 STEP 4B: Helper Functions */
   const startPress = (msgId) => {
     pressTimer.current = setTimeout(() => {
       setLongPressedMsg(msgId);
@@ -35,12 +33,10 @@ const Chat = () => {
     }
   };
 
-  /* 🔹 Auto scroll */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* 🔹 Initial setup */
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
@@ -79,21 +75,27 @@ const Chat = () => {
     return () => unsubscribe && unsubscribe();
   }, [conversationId, navigate]);
 
-  /* 🔹 Send message */
   const handleSend = async (e) => {
-    e.preventDefault();
-    if (!text.trim() || convoData?.isBlocked || sending) return;
-
+    if (e) e.preventDefault();
+    
     const messageText = text.trim();
+    if (!messageText || convoData?.isBlocked || sending) return;
+
+    // 1. Clear input immediately to avoid confusion
     setSending(true);
-    setText("");
+    setText(""); 
 
     try {
       await sendMessage(conversationId, auth.currentUser.uid, messageText);
-      inputRef.current?.focus();
+      
+      // 2. Refocus after DOM update
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+
     } catch (err) {
       console.error("Send message failed:", err);
-      setText(messageText);
+      setText(messageText); 
     } finally {
       setSending(false);
     }
@@ -138,7 +140,6 @@ const Chat = () => {
 
           return (
             <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-              {/* 🔹 STEP 4C: Long-press aware bubble */}
               <div
                 onMouseDown={() => startPress(msg.id)}
                 onMouseUp={cancelPress}
@@ -160,11 +161,16 @@ const Chat = () => {
                 )}
 
                 <span className={`block text-[10px] mt-1 text-right ${isMe ? "text-blue-100" : "text-gray-400"}`}>
-                  {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "..."}
+                  {msg.createdAt?.toDate 
+                    ? msg.createdAt.toDate().toLocaleTimeString([], { 
+                        hour: "2-digit", 
+                        minute: "2-digit", 
+                        hour12: true // 🔹 Yeh 12-hour format enable karta hai
+                      }) 
+                    : "..."}
                 </span>
               </div>
 
-              {/* 🔹 STEP 4D: Long-press menu */}
               {longPressedMsg === msg.id && isMe && !msg.isDeleted && (
                 <div className="bg-white border rounded-lg shadow-md mt-1 p-2 flex gap-3 text-xs z-10">
                   <button
