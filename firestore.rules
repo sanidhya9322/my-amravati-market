@@ -144,11 +144,13 @@ request.resource.data
 
         /* SOFT DELETE MESSAGE */
         allow update: if signedIn()
-          && request.auth.uid == resource.data.senderId
-          && request.resource.data.keys().hasOnly([
-            "isDeleted",
-            "deletedAt"
-          ]);
+  && request.auth.uid == resource.data.senderId
+  && request.resource.data.keys().hasOnly([
+    "isDeleted",
+    "deletedAt",
+    "deletedFor",
+    "deletedBy"
+  ]);
 
         allow delete: if false;
       }
