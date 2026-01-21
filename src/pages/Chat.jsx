@@ -94,8 +94,7 @@ const Chat = () => {
       }, 0);
 
     } catch (err) {
-      console.error("Send message failed:", err);
-      setText(messageText); 
+    console.error("Send message failed:", err);
     } finally {
       setSending(false);
     }

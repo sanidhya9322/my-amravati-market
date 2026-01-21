@@ -9,7 +9,6 @@ import NotificationBell from "../components/NotificationBell";
 import { requestPermissionAndToken } from "../firebase/messaging";
 import { saveFcmToken } from "../utils/saveFcmToken";
 
-
 const Navbar = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);

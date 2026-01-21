@@ -76,52 +76,53 @@ export const sendMessage = async (conversationId, senderId, text) => {
   if (!text || !text.trim()) return;
 
   const conversationRef = doc(db, "conversations", conversationId);
-  const messagesRef = collection(
-    db,
-    "conversations",
-    conversationId,
-    "messages"
-  );
+  const messagesRef = collection(db, "conversations", conversationId, "messages");
 
   const convoSnap = await getDoc(conversationRef);
   if (!convoSnap.exists()) return;
 
   const convo = convoSnap.data();
-  if (convo.isBlocked) throw new Error("Conversation blocked");
+  if (convo.isBlocked) return;
 
   const isBuyer = senderId === convo.buyerId;
 
-  // 1️⃣ Add message with delivery state
+  // 1️⃣ Message write — NEVER fail UX
   await addDoc(messagesRef, {
     senderId,
     text: text.trim(),
     createdAt: serverTimestamp(),
-    status: "sent", // sent → seen later
+    status: "sent",
     type: "text",
     isDeleted: false,
   });
 
-  // 2️⃣ Update conversation metadata
-  await updateDoc(conversationRef, {
-    lastMessage: text.trim(),
-    lastMessageAt: serverTimestamp(),
+  // 2️⃣ Conversation metadata — SAFE update
+  try {
+    await updateDoc(conversationRef, {
+      lastMessage: text.trim(),
+      lastMessageAt: serverTimestamp(),
+      buyerUnread: isBuyer ? 0 : increment(1),
+      sellerUnread: isBuyer ? increment(1) : 0,
+      buyerTyping: false,
+      sellerTyping: false,
+    });
+  } catch (err) {
+    console.warn("Conversation update failed:", err);
+  }
 
-    buyerUnread: isBuyer ? 0 : increment(1),
-    sellerUnread: isBuyer ? increment(1) : 0,
+  // 3️⃣ Notification — NEVER block send
+  try {
+    const receiverId = isBuyer ? convo.sellerId : convo.buyerId;
 
-    buyerTyping: false,
-    sellerTyping: false,
-  });
-
-  // 3️⃣ Notification
-  const receiverId = isBuyer ? convo.sellerId : convo.buyerId;
-
-  await createNotification(receiverId, {
-    title: "New message",
-    message: text.length > 60 ? text.slice(0, 60) + "…" : text,
-    type: "chat",
-    link: `/messages/${conversationId}`,
-  });
+    await createNotification(receiverId, {
+      title: "New message",
+      message: text.length > 60 ? text.slice(0, 60) + "…" : text,
+      type: "chat",
+      link: `/messages/${conversationId}`,
+    });
+  } catch (err) {
+    console.warn("Notification failed:", err);
+  }
 };
 
 /* ======================================================
