@@ -12,6 +12,10 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+
+// 🔹 META PIXEL TRACKING
+import { trackEvent } from "../utils/metaPixel";
+
 /* ================= IMAGE UPLOAD ================= */
 const uploadImages = async (files, userId) => {
   const urls = [];
@@ -94,88 +98,92 @@ const AddProduct = () => {
 
   /* ===== SUBMIT ===== */
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!auth.currentUser) {
-    toast.error("Please login first");
-    return;
-  }
-
-  if (!formData.title || !formData.description || !formData.price) {
-    toast.error("Please fill all required fields");
-    return;
-  }
-
-  if (images.length === 0) {
-    toast.error("Please upload at least one image");
-    return;
-  }
-
-  setUploading(true);
-
-  try {
-    /* 🔥 DAILY LIMIT CHECK */
-    const q = query(
-      collection(db, "products"),
-      where("userId", "==", auth.currentUser.uid)
-    );
-    const snap = await getDocs(q);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todayCount = snap.docs.filter((d) => {
-      const created = d.data().createdAt?.toDate?.();
-      return created && created >= today;
-    }).length;
-
-    if (todayCount >= DAILY_LIMIT) {
-      toast.error("Daily limit reached (3 products per day)");
-      setUploading(false);
+    if (!auth.currentUser) {
+      toast.error("Please login first");
       return;
     }
 
-    /* 🔥 IMAGE UPLOAD */
-    const imageUrls = await uploadImages(images, auth.currentUser.uid);
+    if (!formData.title || !formData.description || !formData.price) {
+      toast.error("Please fill all required fields");
+      return;
+    }
 
-    /* 🔥 SAVE PRODUCT (ADMIN SAFE) */
-    await addDoc(collection(db, "products"), {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      price: parseFloat(formData.price),
-      category: formData.category,
-      location: formData.location,
-      sellerPhone: formData.sellerPhone || null,
+    if (images.length === 0) {
+      toast.error("Please upload at least one image");
+      return;
+    }
 
-      imageUrls,
+    setUploading(true);
 
-      userId: auth.currentUser.uid,
-      userEmail: auth.currentUser.email,
+    try {
+      /* 🔥 DAILY LIMIT CHECK */
+      const q = query(
+        collection(db, "products"),
+        where("userId", "==", auth.currentUser.uid)
+      );
+      const snap = await getDocs(q);
 
-      approved: false,              // 🔴 VERY IMPORTANT
-      promoted: false,
-      promotionExpiresAt: null,
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-      createdAt: serverTimestamp(),
-      createdAtClient: Timestamp.now(),
-    });
+      const todayCount = snap.docs.filter((d) => {
+        const created = d.data().createdAt?.toDate?.();
+        return created && created >= today;
+      }).length;
 
-    toast.success("Product added successfully 🎉");
-    previewURLs.forEach(URL.revokeObjectURL);
-    navigate("/dashboard");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to add product. Try again.");
-  } finally {
-    setUploading(false);
-  }
-};
+      if (todayCount >= DAILY_LIMIT) {
+        toast.error("Daily limit reached (3 products per day)");
+        setUploading(false);
+        return;
+      }
+
+      /* 🔥 IMAGE UPLOAD */
+      const imageUrls = await uploadImages(images, auth.currentUser.uid);
+
+      /* 🔥 SAVE PRODUCT (ADMIN SAFE) */
+      await addDoc(collection(db, "products"), {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        category: formData.category,
+        location: formData.location,
+        sellerPhone: formData.sellerPhone || null,
+
+        imageUrls,
+
+        userId: auth.currentUser.uid,
+        userEmail: auth.currentUser.email,
+
+        approved: false,              // 🔴 VERY IMPORTANT
+        promoted: false,
+        promotionExpiresAt: null,
+
+        createdAt: serverTimestamp(),
+        createdAtClient: Timestamp.now(),
+      });
+
+      // Meta Pixel Lead Event
+      trackEvent("Lead", {
+        content_name: formData.title,
+        category: formData.category,
+      });
+
+      toast.success("Product added successfully 🎉");
+      previewURLs.forEach(URL.revokeObjectURL);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add product. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center px-4 py-10">
-
-
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-center">
           📦 Add New Product

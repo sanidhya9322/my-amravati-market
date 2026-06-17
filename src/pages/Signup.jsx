@@ -9,6 +9,9 @@ import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
+// 🔹 META PIXEL TRACKING
+import { trackEvent } from "../utils/metaPixel";
+
 function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,6 +42,11 @@ function Signup() {
         email: user.email,
         role: "customer",
         createdAt: serverTimestamp(),
+      });
+
+      // Track Email Signup Event
+      trackEvent("CompleteRegistration", {
+        method: "Email",
       });
 
       toast.success("✅ Signup successful!");
@@ -75,6 +83,11 @@ function Signup() {
           photoURL: user.photoURL,
           role: "customer",
           createdAt: serverTimestamp(),
+        });
+
+        // Track Google Signup Event (Only for new users)
+        trackEvent("CompleteRegistration", {
+          method: "Google",
         });
       }
 
