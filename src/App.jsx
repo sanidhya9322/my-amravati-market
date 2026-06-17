@@ -39,6 +39,8 @@ import usePageTracking from "./hooks/usePageTracking";
 
 // Analytics
 import ReactGA from "react-ga4";
+import ReactPixel from "react-facebook-pixel";
+import { initMetaPixel } from "./utils/metaPixel";
 
 // Toast
 import toast, { Toaster } from "react-hot-toast"; // ✅ Added toast (Default import)
@@ -51,6 +53,7 @@ import { onForegroundMessage } from "./firebase/messaging"; // ✅ Added Firebas
 // -------------------------------------------
 ReactGA.initialize("G-4PWTPFE8LR");
 
+ReactPixel.init("2548641895595040");
 // -------------------------------------------
 // Page Tracking Wrapper
 // -------------------------------------------
@@ -64,6 +67,10 @@ function PageTrackingWrapper() {
 // -------------------------------------------
 function App() {
   useLenis();
+
+  useEffect(() => {
+    initMetaPixel();
+  }, []);
 
   // ✅ Firebase Foreground Message Listener
   useEffect(() => {
