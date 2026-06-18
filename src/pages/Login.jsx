@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { auth } from "../firebase/firebaseConfig";
+import { auth, db } from "../firebase/firebaseConfig";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -34,8 +35,26 @@ function Login() {
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError("Invalid credentials. Please try again.");
-      toast.error("❌ Invalid email or password");
+
+      if (
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/invalid-credential"
+      ) {
+        toast.error("Account not found. Redirecting to Sign Up...");
+
+        setTimeout(() => {
+          navigate("/signup");
+        }, 1500);
+
+        return;
+      }
+
+      if (err.code === "auth/wrong-password") {
+        toast.error("Incorrect password");
+        return;
+      }
+
+      toast.error("Login failed");
     }
     setLoading(false);
   };
@@ -44,28 +63,62 @@ function Login() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      // Create Firestore document for first-time Google users
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          name: user.displayName || "",
+          photoURL: user.photoURL || "",
+          role: "customer",
+          provider: "google",
+          createdAt: serverTimestamp(),
+        });
+      }
+
       toast.success("✅ Logged in with Google!");
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
       toast.error("❌ Google login failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // -------- Facebook Login ----------
   const handleFacebookLogin = async () => {
     setLoading(true);
     try {
-      await signInWithPopup(auth, facebookProvider);
+      const result = await signInWithPopup(auth, facebookProvider);
+      const user = result.user;
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      // Create Firestore document for first-time Facebook users
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email || "",
+          name: user.displayName || "",
+          photoURL: user.photoURL || "",
+          role: "customer",
+          provider: "facebook",
+          createdAt: serverTimestamp(),
+        });
+      }
+
       toast.success("✅ Logged in with Facebook!");
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
       toast.error("❌ Facebook login failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -133,6 +186,7 @@ function Login() {
         <div className="flex flex-col space-y-3">
           <button
             onClick={handleGoogleLogin}
+            type="button"
             className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
           >
             <img
@@ -145,6 +199,7 @@ function Login() {
 
           <button
             onClick={handleFacebookLogin}
+            type="button"
             className="flex items-center justify-center w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
           >
             <img
