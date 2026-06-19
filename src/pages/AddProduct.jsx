@@ -240,11 +240,14 @@ const AddProduct = () => {
               className="px-4 py-3 border rounded-lg"
             >
               <option>Books & Notes</option>
+              <option>Electronics</option>
+              <option>Mobile Accessories</option>
               <option>Handmade Items</option>
               <option>Homemade Food</option>
+              <option>Fashion</option>
+              <option>Furniture</option>
               <option>Second-hand Items</option>
-              <option>New Items</option>
-              <option>From Shop</option>
+              <option>Shop Products</option>
             </select>
 
             <input

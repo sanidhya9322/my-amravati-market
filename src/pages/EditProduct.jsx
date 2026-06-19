@@ -149,11 +149,14 @@ function EditProduct() {
           >
             <option value="">Select Category</option>
             <option>Books & Notes</option>
+            <option>Electronics</option>
+            <option>Mobile Accessories</option>
               <option>Handmade Items</option>
               <option>Homemade Food</option>
+              <option>Fashion</option>
+              <option>Furniture</option>
               <option>Second-hand Items</option>
-              <option>New Items</option>
-              <option>From shop</option>
+            <option>Shop Products</option>
           </select>
 
           <label>Change Image (optional):</label>
