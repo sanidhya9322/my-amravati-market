@@ -32,6 +32,8 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import UpdatePrompt from "./components/UpdatePrompt";
+import InstallPrompt from "./components/InstallPrompt";
 
 // Hooks
 import useLenis from "./hooks/useLenis";
@@ -90,6 +92,10 @@ function App() {
 
   return (
     <Router>
+      <InstallPrompt />
+
+      <UpdatePrompt />
+      
       {/* Scroll reset on every route change */}
       <ScrollToTop />
 
