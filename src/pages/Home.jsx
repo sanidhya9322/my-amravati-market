@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import RecentlyAddedProducts from "../components/RecentlyAddedProducts";
+import FeaturedProducts from "../components/FeaturedProducts";
 
 const Home = () => {
   return (
@@ -54,7 +55,9 @@ const Home = () => {
         </motion.div>
       </section>
 
-      <RecentlyAddedProducts />
+      <FeaturedProducts />
+
+<RecentlyAddedProducts />
 
       {/* ================= TRUST STRIP ================= */}
       <section className="border-t border-b bg-gray-50">

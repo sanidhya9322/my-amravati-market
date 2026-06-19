@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackEvent } from "../utils/metaPixel";
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -39,16 +40,21 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+  if (!deferredPrompt) return;
 
-    deferredPrompt.prompt();
+  deferredPrompt.prompt();
 
-    const result = await deferredPrompt.userChoice;
+  const result = await deferredPrompt.userChoice;
 
-    if (result.outcome === "accepted") {
-      setVisible(false);
-    }
-  };
+  if (result.outcome === "accepted") {
+
+    trackEvent("InstallApp", {
+      source: "PWA",
+    });
+
+    setVisible(false);
+  }
+};
 
   const handleClose = () => {
     const sevenDays =
