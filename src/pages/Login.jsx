@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import ReactGA from "react-ga4";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -31,6 +32,9 @@ function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      ReactGA.event("login", {
+  method: "email",
+});
       toast.success("✅ Logged in successfully!");
       navigate("/dashboard");
     } catch (err) {
@@ -80,6 +84,10 @@ function Login() {
         });
       }
 
+      ReactGA.event("login", {
+  method: "google",
+});
+
       toast.success("✅ Logged in with Google!");
       navigate("/dashboard");
     } catch (err) {
@@ -110,6 +118,10 @@ function Login() {
           createdAt: serverTimestamp(),
         });
       }
+
+      ReactGA.event("login", {
+  method: "facebook",
+});
 
       toast.success("✅ Logged in with Facebook!");
       navigate("/dashboard");

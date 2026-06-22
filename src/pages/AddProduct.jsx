@@ -16,6 +16,8 @@ import toast, { Toaster } from "react-hot-toast";
 // 🔹 META PIXEL TRACKING
 import { trackEvent } from "../utils/metaPixel";
 
+import ReactGA from "react-ga4";
+
 /* ================= IMAGE UPLOAD ================= */
 const uploadImages = async (files, userId) => {
   const urls = [];
@@ -163,6 +165,11 @@ const AddProduct = () => {
         createdAt: serverTimestamp(),
         createdAtClient: Timestamp.now(),
       });
+
+      // GA4 Product Listing Event
+ReactGA.event("add_product", {
+  category: formData.category,
+});
 
       // Meta Pixel Lead Event
       trackEvent("Lead", {

@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 
 // 🔹 META PIXEL TRACKING
 import { trackEvent } from "../utils/metaPixel";
+import ReactGA from "react-ga4"; 
 
 function Signup() {
   const [email, setEmail] = useState("");
@@ -43,6 +44,9 @@ function Signup() {
         role: "customer",
         createdAt: serverTimestamp(),
       });
+
+      // GA4 Signup Event
+ReactGA.event("sign_up");
 
       // Track Email Signup Event
       trackEvent("CompleteRegistration", {
@@ -84,6 +88,9 @@ function Signup() {
           role: "customer",
           createdAt: serverTimestamp(),
         });
+
+        // GA4 Signup Event
+ReactGA.event("sign_up");
 
         // Track Google Signup Event (Only for new users)
         trackEvent("CompleteRegistration", {
