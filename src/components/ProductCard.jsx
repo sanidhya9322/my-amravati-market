@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 // Utils
@@ -30,13 +29,7 @@ const ProductCard = ({ product, onToggleFavorite }) => {
       : "Price not set";
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.01 }}
-      className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden"
-    >
+    <article className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden">
       {/* IMAGE SECTION */}
       <div className="relative">
         {/* PROMOTED BADGE */}
@@ -68,6 +61,9 @@ const ProductCard = ({ product, onToggleFavorite }) => {
               src={imageSrc}
               alt={displayTitle}
               loading="lazy"
+              decoding="async"
+              width="400"
+              height="300"
               className="w-full h-full object-cover"
             />
           </div>
@@ -88,7 +84,7 @@ const ProductCard = ({ product, onToggleFavorite }) => {
           {displayTitle}
         </h3>
       </Link>
-    </motion.article>
+    </article>
   );
 };
 

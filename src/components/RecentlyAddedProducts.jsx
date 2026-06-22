@@ -22,7 +22,7 @@ const RecentlyAddedProducts = () => {
           collection(db, "products"),
           where("approved", "==", true),
           orderBy("createdAt", "desc"),
-          limit(8)
+          limit(6)
         );
 
         const snapshot = await getDocs(q);

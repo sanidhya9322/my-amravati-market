@@ -13,6 +13,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
+// 🔹 IMAGE COMPRESSION
+import imageCompression from "browser-image-compression";
+
 // 🔹 META PIXEL TRACKING
 import { trackEvent } from "../utils/metaPixel";
 
@@ -23,10 +26,33 @@ const uploadImages = async (files, userId) => {
   const urls = [];
 
   for (const file of files) {
-    const fileName = `${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, `productImages/${userId}/${fileName}`);
-    const snap = await uploadBytes(storageRef, file);
+    // Original size log
+    console.log("Original:", (file.size / 1024 / 1024).toFixed(2), "MB");
+
+    const compressedFile = await imageCompression(file, {
+      maxSizeMB: 0.2,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+      fileType: "image/webp",
+    });
+
+    // Compressed size log
+    console.log("Compressed:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+
+    const fileName = `${Date.now()}.webp`;
+
+    const storageRef = ref(
+      storage,
+      `productImages/${userId}/${fileName}`
+    );
+
+    const snap = await uploadBytes(
+      storageRef,
+      compressedFile
+    );
+
     const url = await getDownloadURL(snap.ref);
+
     urls.push(url);
   }
 
@@ -167,9 +193,9 @@ const AddProduct = () => {
       });
 
       // GA4 Product Listing Event
-ReactGA.event("add_product", {
-  category: formData.category,
-});
+      ReactGA.event("add_product", {
+        category: formData.category,
+      });
 
       // Meta Pixel Lead Event
       trackEvent("Lead", {

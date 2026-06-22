@@ -13,6 +13,7 @@
     "@mui/icons-material": "^7.2.0",
     "@studio-freight/lenis": "^1.0.42",
     "bootstrap": "^5.3.7",
+    "browser-image-compression": "^2.0.2",
     "firebase": "^12.8.0",
     "firebase-admin": "^13.5.0",
     "framer-motion": "^12.23.6",
