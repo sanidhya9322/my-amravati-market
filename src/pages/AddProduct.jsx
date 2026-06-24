@@ -23,66 +23,55 @@ import ReactGA from "react-ga4";
 
 /* ================= IMAGE UPLOAD ================= */
 const uploadImages = async (files, userId) => {
-  const uploadedImages = [];
+  const imageUrls = [];
+  const thumbnailUrls = [];
 
-  for (const file of files) {
-    // Original size log
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
     console.log("Original:", (file.size / 1024 / 1024).toFixed(2), "MB");
 
-    const compressedFile = await imageCompression(file, {
-      maxSizeMB: 0.2,
-      maxWidthOrHeight: 1200,
-      useWebWorker: true,
-      fileType: "image/webp",
-    });
+    try {
+      // 1. Compress Main Image
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
 
-    const thumbnailFile = await imageCompression(file, {
-  maxSizeMB: 0.05,
-  maxWidthOrHeight: 400,
-  useWebWorker: true,
-  fileType: "image/webp",
-});
+      // 2. Compress Thumbnail
+      const thumbnailFile = await imageCompression(file, {
+        maxSizeMB: 0.05,
+        maxWidthOrHeight: 400,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
 
-    // Compressed size log
-    console.log("Compressed:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+      console.log("Compressed:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+      console.log("Thumbnail:", (thumbnailFile.size / 1024 / 1024).toFixed(2), "MB");
 
-    console.log(
-  "Thumbnail:",
-  (thumbnailFile.size / 1024 / 1024).toFixed(2),
-  "MB"
-);
+      // Loop index appended to guarantee unique filenames
+      const fileName = `${Date.now()}_${i}.webp`;
 
-    const fileName = `${Date.now()}.webp`;
+      const storageRef = ref(storage, `productImages/${userId}/${fileName}`);
+      const thumbnailRef = ref(storage, `productThumbnails/${userId}/${fileName}`);
 
-    const storageRef = ref(
-      storage,
-      `productImages/${userId}/${fileName}`
-    );
+      // 3. Upload Main Image
+      const snap = await uploadBytes(storageRef, compressedFile);
+      const url = await getDownloadURL(snap.ref);
+      imageUrls.push(url);
 
-    const thumbnailRef = ref(
-  storage,
-  `productThumbnails/${userId}/${fileName}`
-);
-
-    const snap = await uploadBytes(
-      storageRef,
-      compressedFile
-    );
-
-    const url = await getDownloadURL(snap.ref);
-
-    uploadedImages.push(url);
+      // 4. Upload Thumbnail
+      const thumbnailSnap = await uploadBytes(thumbnailRef, thumbnailFile);
+      const thumbnailUrl = await getDownloadURL(thumbnailSnap.ref);
+      thumbnailUrls.push(thumbnailUrl);
+    } catch (err) {
+      console.error(`Error compressing or uploading file ${file.name}:`, err);
+      throw err;
+    }
   }
-const thumbnailSnap = await uploadBytes(
-  thumbnailRef,
-  thumbnailFile
-);
 
-const thumbnailUrl = await getDownloadURL(
-  thumbnailSnap.ref
-);
-
-  return uploadedImages;
+  return { imageUrls, thumbnailUrls };
 };
 /* ================================================= */
 
@@ -137,6 +126,7 @@ const AddProduct = () => {
 
     if (files.length > 6) {
       toast.error("You can upload maximum 6 images");
+      e.target.value = ""; // Reset HTML input field string state safely
       return;
     }
 
@@ -172,29 +162,26 @@ const AddProduct = () => {
     setUploading(true);
 
     try {
-      /* 🔥 DAILY LIMIT CHECK */
-      const q = query(
-        collection(db, "products"),
-        where("userId", "==", auth.currentUser.uid)
-      );
-      const snap = await getDocs(q);
-
+      /* 🔥 OPTIMIZED DAILY LIMIT CHECK */
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const todayCount = snap.docs.filter((d) => {
-        const created = d.data().createdAt?.toDate?.();
-        return created && created >= today;
-      }).length;
+      // Filter directly inside Firestore instead of downloading everything
+      const q = query(
+        collection(db, "products"),
+        where("userId", "==", auth.currentUser.uid),
+        where("createdAtClient", ">=", Timestamp.fromDate(today))
+      );
+      const snap = await getDocs(q);
 
-      if (todayCount >= DAILY_LIMIT) {
+      if (snap.size >= DAILY_LIMIT) {
         toast.error("Daily limit reached (3 products per day)");
         setUploading(false);
         return;
       }
 
-      /* 🔥 IMAGE UPLOAD */
-      const imageUrls = await uploadImages(images, auth.currentUser.uid);
+      /* 🔥 IMAGE & THUMBNAIL UPLOAD */
+      const { imageUrls, thumbnailUrls } = await uploadImages(images, auth.currentUser.uid);
 
       /* 🔥 SAVE PRODUCT (ADMIN SAFE) */
       await addDoc(collection(db, "products"), {
@@ -206,6 +193,7 @@ const AddProduct = () => {
         sellerPhone: formData.sellerPhone || null,
 
         imageUrls,
+        thumbnailUrls, // Saving corresponding compressed thumbnails now
 
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
@@ -243,6 +231,7 @@ const AddProduct = () => {
   /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center px-4 py-10">
+      <Toaster position="top-center" />
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-center">
           📦 Add New Product

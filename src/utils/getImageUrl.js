@@ -1,18 +1,15 @@
 export default function getImageUrl(product) {
   if (!product) return "/placeholder.png";
 
-  // NEW SYSTEM
+  // 🚀 Thumbnail first
   if (
-    Array.isArray(product.images) &&
-    product.images.length > 0
+    Array.isArray(product.thumbnailUrls) &&
+    product.thumbnailUrls.length > 0
   ) {
-    return (
-      product.images[0].thumbnail ||
-      product.images[0].original
-    );
+    return product.thumbnailUrls[0];
   }
 
-  // OLD SYSTEM
+  // Fallback old products
   if (
     Array.isArray(product.imageUrls) &&
     product.imageUrls.length > 0
