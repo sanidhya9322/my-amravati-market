@@ -23,7 +23,7 @@ import ReactGA from "react-ga4";
 
 /* ================= IMAGE UPLOAD ================= */
 const uploadImages = async (files, userId) => {
-  const urls = [];
+  const uploadedImages = [];
 
   for (const file of files) {
     // Original size log
@@ -36,8 +36,21 @@ const uploadImages = async (files, userId) => {
       fileType: "image/webp",
     });
 
+    const thumbnailFile = await imageCompression(file, {
+  maxSizeMB: 0.05,
+  maxWidthOrHeight: 400,
+  useWebWorker: true,
+  fileType: "image/webp",
+});
+
     // Compressed size log
     console.log("Compressed:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+
+    console.log(
+  "Thumbnail:",
+  (thumbnailFile.size / 1024 / 1024).toFixed(2),
+  "MB"
+);
 
     const fileName = `${Date.now()}.webp`;
 
@@ -46,6 +59,11 @@ const uploadImages = async (files, userId) => {
       `productImages/${userId}/${fileName}`
     );
 
+    const thumbnailRef = ref(
+  storage,
+  `productThumbnails/${userId}/${fileName}`
+);
+
     const snap = await uploadBytes(
       storageRef,
       compressedFile
@@ -53,10 +71,18 @@ const uploadImages = async (files, userId) => {
 
     const url = await getDownloadURL(snap.ref);
 
-    urls.push(url);
+    uploadedImages.push(url);
   }
+const thumbnailSnap = await uploadBytes(
+  thumbnailRef,
+  thumbnailFile
+);
 
-  return urls;
+const thumbnailUrl = await getDownloadURL(
+  thumbnailSnap.ref
+);
+
+  return uploadedImages;
 };
 /* ================================================= */
 
