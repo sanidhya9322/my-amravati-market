@@ -1,7 +1,11 @@
 // -------------------------------------------
 // App.jsx (Updated with Firebase Messaging)
 // -------------------------------------------
-import React, { useEffect } from "react"; // ✅ Added useEffect
+import React, {
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Pages
@@ -17,14 +21,14 @@ import ProductDetails from "./pages/ProductDetails";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminPage from "./pages/AdminPage";
-import AdminFeaturedRequests from "./pages/AdminFeaturedRequests";
-import AdminPromoteRequests from "./pages/AdminPromoteRequests";
 import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminSellerReport from "./pages/AdminSellerReport";
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const AdminFeaturedRequests = lazy(() => import("./pages/AdminFeaturedRequests"));
+const AdminPromoteRequests = lazy(() => import("./pages/AdminPromoteRequests"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+const AdminSellerReport = lazy(() => import("./pages/AdminSellerReport"));
 
 // Components
 import Navbar from "./components/Navbar";

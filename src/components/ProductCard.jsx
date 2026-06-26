@@ -88,4 +88,4 @@ const ProductCard = ({ product, onToggleFavorite }) => {
   );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

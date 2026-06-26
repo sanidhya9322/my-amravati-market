@@ -11,11 +11,16 @@ import { Link } from "react-router-dom";
 import { db } from "../firebase/firebaseConfig";
 import ProductCard from "./ProductCard";
 
+// Empty function to prevent unnecessary re-renders
+const noop = () => {};
+
 const RecentlyAddedProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchProducts = async () => {
       try {
         const q = query(
@@ -27,42 +32,28 @@ const RecentlyAddedProducts = () => {
 
         const snapshot = await getDocs(q);
 
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setProducts(data);
+        if (isMounted) {
+          const data = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setProducts(data);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching recent products: ", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchProducts();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  if (loading) {
-    return (
-      <section className="max-w-7xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold mb-6">
-          Recently Added Products
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 bg-gray-200 animate-pulse rounded-xl"
-            />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (!products.length) return null;
+  if (!loading && !products.length) return null;
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-10">
@@ -80,13 +71,20 @@ const RecentlyAddedProducts = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onToggleFavorite={() => {}}
-          />
-        ))}
+        {loading
+          ? [...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="h-64 bg-gray-200 animate-pulse rounded-xl"
+              />
+            ))
+          : products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onToggleFavorite={noop}
+              />
+            ))}
       </div>
     </section>
   );

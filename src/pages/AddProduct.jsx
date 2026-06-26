@@ -13,9 +13,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-// 🔹 IMAGE COMPRESSION
-import imageCompression from "browser-image-compression";
-
 // 🔹 META PIXEL TRACKING
 import { trackEvent } from "../utils/metaPixel";
 
@@ -31,6 +28,10 @@ const uploadImages = async (files, userId) => {
     console.log("Original:", (file.size / 1024 / 1024).toFixed(2), "MB");
 
     try {
+      // Dynamically import compression
+      const imageCompression =
+        (await import("browser-image-compression")).default;
+
       // 1. Compress Main Image
       const compressedFile = await imageCompression(file, {
         maxSizeMB: 0.2,
@@ -47,14 +48,25 @@ const uploadImages = async (files, userId) => {
         fileType: "image/webp",
       });
 
-      console.log("Compressed:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
-      console.log("Thumbnail:", (thumbnailFile.size / 1024 / 1024).toFixed(2), "MB");
+      console.log(
+        "Compressed:",
+        (compressedFile.size / 1024 / 1024).toFixed(2),
+        "MB"
+      );
+      console.log(
+        "Thumbnail:",
+        (thumbnailFile.size / 1024 / 1024).toFixed(2),
+        "MB"
+      );
 
       // Loop index appended to guarantee unique filenames
       const fileName = `${Date.now()}_${i}.webp`;
 
       const storageRef = ref(storage, `productImages/${userId}/${fileName}`);
-      const thumbnailRef = ref(storage, `productThumbnails/${userId}/${fileName}`);
+      const thumbnailRef = ref(
+        storage,
+        `productThumbnails/${userId}/${fileName}`
+      );
 
       // 3. Upload Main Image
       const snap = await uploadBytes(storageRef, compressedFile);
@@ -181,7 +193,10 @@ const AddProduct = () => {
       }
 
       /* 🔥 IMAGE & THUMBNAIL UPLOAD */
-      const { imageUrls, thumbnailUrls } = await uploadImages(images, auth.currentUser.uid);
+      const { imageUrls, thumbnailUrls } = await uploadImages(
+        images,
+        auth.currentUser.uid
+      );
 
       /* 🔥 SAVE PRODUCT (ADMIN SAFE) */
       await addDoc(collection(db, "products"), {
@@ -198,7 +213,7 @@ const AddProduct = () => {
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
 
-        approved: false,              // 🔴 VERY IMPORTANT
+        approved: false, // 🔴 VERY IMPORTANT
         promoted: false,
         promotionExpiresAt: null,
 
@@ -341,8 +356,8 @@ const AddProduct = () => {
 
           {/* TRUST */}
           <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-            🔒 Buyers will contact you via secure in-app chat.  
-            Your phone number is not shown publicly.
+            🔒 Buyers will contact you via secure in-app chat. Your phone number
+            is not shown publicly.
           </div>
 
           <button

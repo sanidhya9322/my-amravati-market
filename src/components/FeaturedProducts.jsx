@@ -10,16 +10,18 @@ import { Link } from "react-router-dom";
 import { db } from "../firebase/firebaseConfig";
 import ProductCard from "./ProductCard";
 
+// Empty function to prevent unnecessary re-renders or prop issues
+const noop = () => {};
+
 const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true; // Memory leak se bachne ke liye cleanup flag
+    let isMounted = true;
 
     const fetchFeatured = async () => {
       try {
-        // NOTE: Make sure to click the link in your browser console to create the composite index in Firebase!
         const q = query(
           collection(db, "products"),
           where("approved", "==", true),
@@ -46,11 +48,10 @@ const FeaturedProducts = () => {
     fetchFeatured();
 
     return () => {
-      isMounted = false; // Component unmount hone par state update block karega
+      isMounted = false;
     };
   }, []);
 
-  // Agar load ho chuka hai aur database mein koi featured product nahi mila, toh section chhupa do
   if (!loading && !products.length) return null;
 
   return (
@@ -70,16 +71,14 @@ const FeaturedProducts = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {loading
-          ? // Firestore se data aane tak cards ka skeleton loading state
-            [...Array(4)].map((_, i) => (
+          ? [...Array(6)].map((_, i) => (
               <div key={i} className="h-72 bg-gray-100 rounded animate-pulse" />
             ))
-          : // Data load hone ke baad actual cards render honge
-            products.map((product) => (
+          : products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onToggleFavorite={() => console.log(`Toggled favorite for: ${product.id}`)}
+                onToggleFavorite={noop}
               />
             ))}
       </div>
