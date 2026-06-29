@@ -18,74 +18,8 @@ import { trackEvent } from "../utils/metaPixel";
 
 import ReactGA from "react-ga4";
 
-/* ================= IMAGE UPLOAD ================= */
-const uploadImages = async (files, userId) => {
-  const imageUrls = [];
-  const thumbnailUrls = [];
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    console.log("Original:", (file.size / 1024 / 1024).toFixed(2), "MB");
-
-    try {
-      // Dynamically import compression
-      const imageCompression =
-        (await import("browser-image-compression")).default;
-
-      // 1. Compress Main Image
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.2,
-        maxWidthOrHeight: 1200,
-        useWebWorker: true,
-        fileType: "image/webp",
-      });
-
-      // 2. Compress Thumbnail
-      const thumbnailFile = await imageCompression(file, {
-        maxSizeMB: 0.05,
-        maxWidthOrHeight: 400,
-        useWebWorker: true,
-        fileType: "image/webp",
-      });
-
-      console.log(
-        "Compressed:",
-        (compressedFile.size / 1024 / 1024).toFixed(2),
-        "MB"
-      );
-      console.log(
-        "Thumbnail:",
-        (thumbnailFile.size / 1024 / 1024).toFixed(2),
-        "MB"
-      );
-
-      // Loop index appended to guarantee unique filenames
-      const fileName = `${Date.now()}_${i}.webp`;
-
-      const storageRef = ref(storage, `productImages/${userId}/${fileName}`);
-      const thumbnailRef = ref(
-        storage,
-        `productThumbnails/${userId}/${fileName}`
-      );
-
-      // 3. Upload Main Image
-      const snap = await uploadBytes(storageRef, compressedFile);
-      const url = await getDownloadURL(snap.ref);
-      imageUrls.push(url);
-
-      // 4. Upload Thumbnail
-      const thumbnailSnap = await uploadBytes(thumbnailRef, thumbnailFile);
-      const thumbnailUrl = await getDownloadURL(thumbnailSnap.ref);
-      thumbnailUrls.push(thumbnailUrl);
-    } catch (err) {
-      console.error(`Error compressing or uploading file ${file.name}:`, err);
-      throw err;
-    }
-  }
-
-  return { imageUrls, thumbnailUrls };
-};
-/* ================================================= */
+// 🔹 IMAGE UPLOAD UTILITY
+import { uploadImages } from "../utils/imageUpload";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -193,7 +127,7 @@ const AddProduct = () => {
       }
 
       /* 🔥 IMAGE & THUMBNAIL UPLOAD */
-      const { imageUrls, thumbnailUrls } = await uploadImages(
+      const { imageUrls, thumbnailUrl } = await uploadImages(
         images,
         auth.currentUser.uid
       );
@@ -208,7 +142,7 @@ const AddProduct = () => {
         sellerPhone: formData.sellerPhone || null,
 
         imageUrls,
-        thumbnailUrls, // Saving corresponding compressed thumbnails now
+        thumbnailUrl, // Now saving the singular thumbnail url
 
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
