@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { db, storage, auth } from "../firebase/firebaseConfig";
+import { db, auth } from "../firebase/firebaseConfig";
 import {
   collection,
   query,
@@ -10,10 +10,10 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
-import { deleteObject, ref } from "firebase/storage";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { deleteImages } from "../utils/imageUpload";
 
 const promotionPlans = [
   { price: 49, days: 7, label: "₹49 • 7 days" },
@@ -27,6 +27,7 @@ function Dashboard() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deletingProductId, setDeletingProductId] = useState(null);
 
   /* ---------------- FETCH PRODUCTS ---------------- */
   const fetchUserProducts = async () => {
@@ -57,17 +58,38 @@ function Dashboard() {
 
   /* ---------------- DELETE ---------------- */
   const handleDelete = async (product) => {
-    if (!window.confirm("Delete this product permanently?")) return;
+    if (!window.confirm("Delete Product?\nThis action cannot be undone.")) return;
+
+    setDeletingProductId(product.id);
 
     try {
-      if (product.imageUrls?.[0]) {
-        await deleteObject(ref(storage, product.imageUrls[0]));
+      // 1. Reconstruct urls array safely (Handling both legacy imageUrl and modern imageUrls)
+      let urlsToDelete = [];
+      if (Array.isArray(product.imageUrls)) {
+        urlsToDelete = [...product.imageUrls];
+      } else if (typeof product.imageUrl === "string") {
+        urlsToDelete = [product.imageUrl];
       }
+
+      // 2. Safely attempt to delete images from Storage
+      try {
+        if (urlsToDelete.length > 0 || product.thumbnailUrl) {
+          await deleteImages(urlsToDelete, product.thumbnailUrl);
+        }
+      } catch {
+        toast.error("Warning: Could not delete some images, but continuing deletion.");
+      }
+
+      // 3. Delete Firestore document
       await deleteDoc(doc(db, "products", product.id));
+      
+      // 4. Clean up local state without reloading
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
-      toast.success("Product deleted");
+      toast.success("Product deleted successfully");
     } catch {
       toast.error("Failed to delete product");
+    } finally {
+      setDeletingProductId(null);
     }
   };
 
@@ -161,7 +183,7 @@ function Dashboard() {
                 className="bg-white rounded-xl shadow-sm hover:shadow-md transition flex flex-col"
               >
                 <img
-                  src={product.imageUrls?.[0] || "/placeholder.png"}
+                  src={product.imageUrls?.[0] || product.imageUrl || "/placeholder.png"}
                   alt={product.title}
                   className="h-48 w-full object-cover rounded-t-xl"
                 />
@@ -212,9 +234,14 @@ function Dashboard() {
                     </Link>
                     <button
                       onClick={() => handleDelete(product)}
-                      className="bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm"
+                      disabled={deletingProductId === product.id}
+                      className={`py-2 rounded-lg text-sm text-white ${
+                        deletingProductId === product.id 
+                          ? "bg-red-400 cursor-not-allowed" 
+                          : "bg-red-500 hover:bg-red-600"
+                      }`}
                     >
-                      Delete
+                      {deletingProductId === product.id ? "Deleting..." : "Delete"}
                     </button>
 
                     {product.featured ? (
