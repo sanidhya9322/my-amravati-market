@@ -36,7 +36,7 @@ const AddProduct = () => {
   const [uploading, setUploading] = useState(false);
 
   const navigate = useNavigate();
-  const DAILY_LIMIT = 3;
+  const DAILY_LIMIT = 10;
 
   /* ===== AUTO LOCATION ===== */
   useEffect(() => {
