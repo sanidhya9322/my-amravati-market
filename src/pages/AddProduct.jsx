@@ -121,7 +121,7 @@ const AddProduct = () => {
       const snap = await getDocs(q);
 
       if (snap.size >= DAILY_LIMIT) {
-        toast.error("Daily limit reached (3 products per day)");
+        toast.error("Daily limit reached (10 products per day)");
         setUploading(false);
         return;
       }
