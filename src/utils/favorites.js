@@ -20,6 +20,7 @@ export const toggleFavorite = async (productId) => {
     "favorites",
     productId
   );
+  
 
   const snap = await getDoc(favRef);
 
