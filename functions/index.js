@@ -1,101 +1,32 @@
-// 🔔 Product Approved → Create Notifications (NO EMAIL / NO PUSH)
-exports.notifyUsersOnProductApproval = onDocumentUpdated(
-  "products/{productId}",
-  async (event) => {
-    const before = event.data.before.data();
-    const after = event.data.after.data();
-    const productId = event.params.productId;
+/**
+ * Import function triggers from their respective submodules:
+ *
+ * const {onCall} = require("firebase-functions/v2/https");
+ * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
+ *
+ * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ */
 
-    // ✅ 1️⃣ Only when approved changes from false → true
-    if (before.approved === true || after.approved !== true) {
-      console.log("Not a fresh approval, skipping notification");
-      return;
-    }
+const {setGlobalOptions} = require("firebase-functions");
+const {onRequest} = require("firebase-functions/https");
+const logger = require("firebase-functions/logger");
 
-    console.log("Product approved, creating notifications");
+// For cost control, you can set the maximum number of containers that can be
+// running at the same time. This helps mitigate the impact of unexpected
+// traffic spikes by instead downgrading performance. This limit is a
+// per-function limit. You can override the limit for each function using the
+// `maxInstances` option in the function's options, e.g.
+// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
+// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
+// functions should each use functions.runWith({ maxInstances: 10 }) instead.
+// In the v1 API, each function can only serve one request per container, so
+// this will be the maximum concurrent request count.
+setGlobalOptions({ maxInstances: 10 });
 
-    const productLocation = after.location;
-    const productCategory = after.category;
+// Create and deploy your first functions
+// https://firebase.google.com/docs/functions/get-started
 
-    const usersSnap = await admin.firestore().collection("users").get();
-
-    const batch = admin.firestore().batch();
-    let notificationCount = 0;
-
-    usersSnap.docs.forEach((doc) => {
-      const user = doc.data();
-
-      const preferredLocations = user.preferredLocations || [];
-      const preferredCategories = user.preferredCategories || [];
-
-      const locationMatch = preferredLocations.includes(productLocation);
-      const categoryMatch = preferredCategories.includes(productCategory);
-
-      // ✅ Location + Category match
-      if (locationMatch && categoryMatch) {
-        const notifRef = admin.firestore().collection("notifications").doc();
-
-        batch.set(notifRef, {
-          userId: doc.id,
-          productId,
-          type: "new_product",
-          title: "🆕 New product near you",
-          body: after.title,
-          read: false,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-
-        notificationCount++;
-      }
-    });
-
-    if (notificationCount > 0) {
-      await batch.commit();
-    }
-
-    console.log(`✅ ${notificationCount} notifications created`);
-  }
-);
-// 🔔 MESSAGE NOTIFICATION (Buyer ↔ Seller)
-exports.notifyOnNewMessage = onDocumentCreated(
-  "conversations/{conversationId}/messages/{messageId}",
-  async (event) => {
-    const message = event.data.data();
-    const { conversationId } = event.params;
-
-    if (!message || !message.senderId) return;
-
-    const convoRef = admin
-      .firestore()
-      .collection("conversations")
-      .doc(conversationId);
-
-    const convoSnap = await convoRef.get();
-    if (!convoSnap.exists) return;
-
-    const convo = convoSnap.data();
-
-    // 🔍 Decide receiver
-    const receiverId =
-      message.senderId === convo.buyerId
-        ? convo.sellerId
-        : convo.buyerId;
-
-    // 🛑 Safety
-    if (!receiverId) return;
-
-    // 🔔 Create notification
-    await admin.firestore().collection("notifications").add({
-      userId: receiverId,
-      type: "message",
-      title: "💬 New message",
-      body: message.text?.slice(0, 80) || "New message received",
-      conversationId,
-      senderId: message.senderId,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    console.log("Message notification sent to", receiverId);
-  }
-);
+// exports.helloWorld = onRequest((request, response) => {
+//   logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
