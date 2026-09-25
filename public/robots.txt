@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://myamravati.com/sitemap.xml
+Sitemap: https://myamravati-market.netlify.app/sitemap.xml

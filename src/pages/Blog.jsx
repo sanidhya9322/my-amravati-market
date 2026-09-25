@@ -10,7 +10,7 @@ function Blog() {
           content="Read local stories, guides, and tips about Amravati market. Discover homemade food, second-hand goods, and more."
         />
         <meta name="keywords" content="Amravati blog, Amravati market news, homemade food Amravati, second hand Amravati, Books and Notes" />
-        <link rel="canonical" href="https://myamravati.com/blog" />
+        <link rel="canonical" href="https://myamravati-market.netlify.app/blog" />
       </Helmet>
 
       <h1 className="mb-3">📚 MyAmravati Blog</h1>

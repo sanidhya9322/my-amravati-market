@@ -13,7 +13,10 @@ import { Helmet } from "react-helmet-async";
       }
     />
     <meta name="keywords" content="Amravati market, Amravati food, Amravati second hand, MyAmravati " />
-    <link rel="canonical" href={`https://myamravati.com/blog/${slug}`} />
+   <link
+  rel="canonical"
+  href={`https://myamravati-market.netlify.app/blog/${slug}`}
+/>
   </Helmet>
   <h1>{post.title}</h1>
   <div>{post.content}</div>
